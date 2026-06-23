@@ -99,7 +99,7 @@ RESEND_API_KEY=
 
 ## Database schema
 
-### `user_roles`
+### `users_roles`
 Stores role per user. One row per user — either `admin` or `customer`.
 
 | Column | Type | Notes |
@@ -174,7 +174,7 @@ RLS is enabled on all four tables. The `is_admin()` helper function handles admi
 
 ## User roles and routing
 
-There are two roles: `admin` and `customer`. After login, check the user's role in `user_roles` and redirect accordingly:
+There are two roles: `admin` and `customer`. After login, check the user's role in `users_roles` and redirect accordingly:
 
 - Admin → `/admin/nfc-items`
 - Customer → `/customer/profile`
@@ -224,9 +224,9 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 
 ## What still needs to be built
 
-- [ ] Supabase client setup (`lib/supabase/client.js` + `lib/supabase/server.js`)
-- [ ] Auth config in Supabase dashboard (invite redirect URLs, email templates)
-- [ ] Middleware — route protection
+- [x] Supabase client setup (`lib/supabase/client.js` + `lib/supabase/server.js`)
+- [x] Auth config in Supabase dashboard (invite redirect URLs, email templates)
+- [x] Middleware — route protection
 - [ ] Login page, invite accept page, password reset page
 - [ ] Admin layout + sidebar
 - [ ] Admin: create NFC item form

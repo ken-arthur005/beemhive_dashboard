@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../lib/supabase/middleware';
+import { createClient } from '../lib/supabase/middleware';
 
 export async function proxy(request) {
   const { supabase, response } = createClient(request);
@@ -16,7 +16,7 @@ export async function proxy(request) {
   }
 
   const { data: roleRow } = await supabase
-    .from('user_roles')
+    .from('users_roles')
     .select('role')
     .eq('user_id', user.id)
     .single();

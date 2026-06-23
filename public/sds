@@ -1,0 +1,192 @@
+# Build: NFC Items Page (`app/(admin)/nfc-items/page.js`)
+
+## Context
+Refer to CLAUDE.md for full project context, stack, folder structure, database schema, and Supabase client conventions before writing any code. This page lives inside the admin layout shell — do not rebuild the sidebar or header.
+
+---
+
+## What to build
+
+A single page at `app/(admin)/nfc-items/page.js` that contains two things:
+
+1. A data table listing all NFC items in the system
+2. A "Create NFC Item" modal/dialog that opens over the table
+
+This is a **Client Component** (`'use client'`) — it manages table data, modal state, and form state locally.
+
+---
+
+## Performance requirements
+
+- On mount, fetch all NFC items in a **single Supabase query** — join the owner's email from `auth.users` via `users_roles` in one call, do not make separate per-row requests
+- Use `useMemo` to derive filtered/sorted table data — never re-filter on every render
+- Optimistic UI on status toggle — update the local state immediately on toggle click, then fire the Supabase update in the background. If the update fails, revert the local state and show an inline error.
+- Optimistic UI on delete — remove the row from local state immediately, then fire the delete. If it fails, re-insert the row and show an error.
+- Debounce the search input — 300ms delay before filtering, using `useCallback` + `useRef` for the timer. Do not install a debounce library.
+- Paginate client-side — show 10 rows per page. Do not fetch pages from the server separately; fetch all at once and slice locally.
+
+---
+
+## Page header
+
+Full-width bar at the top of the page content area (inside the admin layout's `{children}` padding):
+
+- **Left:** Page title "NFC Items" in a large heading + a muted subtitle "Manage your NFC products and customer assignments"
+- **Right:** A primary `emerald-600` button "Create NFC Item" with a `Plus` icon (lucide-react). Clicking opens the modal.
+
+---
+
+## Data table
+
+### Columns
+
+| Column | Source | Notes |
+|---|---|---|
+| Product | `nfc_items.product_type` | Render as a styled badge — `Card`, `Stand`, `Round Tag` — each with a distinct muted color |
+| Customer | owner's email from `user_roles` join | If no owner yet, show "—" |
+| Slug | `nfc_items.slug` | Render as `monospace` text. Include a copy-to-clipboard icon button inline. On copy success, icon briefly changes to a checkmark for 1.5s. |
+| Status | `nfc_items.is_active` | Render as a shadcn/ui `Switch` toggle — green when active, gray when inactive. Clicking triggers optimistic update. |
+| Taps | count of `tap_events` rows for this item | Show as a plain number. Fetch this as part of the initial query using Supabase's count feature — do not make separate requests per row. |
+| Created | `nfc_items.created_at` | Format as `DD MMM YYYY` — use `Intl.DateTimeFormat`, do not install a date library. |
+| Actions | — | A `MoreHorizontal` icon button (lucide-react) that opens a shadcn/ui `DropdownMenu` with: "Copy URL", "Resend invite", "Deactivate / Activate", "Delete" |
+
+### Toolbar (above the table)
+
+- **Search input** — left side. Placeholder "Search by customer or slug…". Filters across customer email and slug columns. Debounced 300ms. Include a `Search` icon inside the input on the left.
+- **Product type filter** — shadcn/ui `Select` dropdown next to search. Options: All, Card, Stand, Round Tag.
+- **Status filter** — shadcn/ui `Select`. Options: All, Active, Inactive.
+- **Row count** — right side, muted text: "Showing X of Y items"
+
+### Empty states
+
+- No data at all → centered illustration area (simple SVG or emoji) + "No NFC items yet" heading + "Create your first NFC item to get started" subtext + the Create button again
+- Search/filter returns nothing → "No items match your search" + a "Clear filters" text button
+
+### Pagination
+
+Below the table: left side shows "Page X of Y", right side has Previous / Next buttons (shadcn/ui `Button` variant `outline`). Disable Previous on page 1, disable Next on last page.
+
+### Loading state
+
+On initial load, render a skeleton table — same column widths, same row height, with `animate-pulse` gray blocks in each cell. Use shadcn/ui `Skeleton`. Show 5 skeleton rows. Never show a full-page spinner — the table chrome (toolbar, header row) should render immediately while data loads.
+
+---
+
+## Create NFC Item modal
+
+### Trigger
+The "Create NFC Item" button in the page header opens this modal. Use shadcn/ui `Dialog`.
+
+### Form fields
+
+**Customer name** — text input, required. Label: "Customer name". Placeholder: "e.g. Kofi Mensah".
+
+**Customer email** — email input, required. Label: "Customer email". Placeholder: "kofi@example.com". Validate format client-side before submit.
+
+**Product type** — shadcn/ui `Select`, required. Label: "Product type". Options:
+- Card
+- Stand
+- Round Tag
+
+**Slug** — text input. Label: "Profile URL slug". Shows a read-only prefix before the input: `beemhive.com/t/` rendered in muted text. The input itself accepts the slug portion only. Rules: lowercase, alphanumeric, hyphens allowed, no spaces, no special characters — enforce with an `onChange` sanitiser that strips invalid characters as the user types. Below the input, show a live preview of the full URL in muted small text: `https://beemhive.com/t/{slug}`. Include a "Generate random" button (dice icon, `Shuffle` from lucide-react) next to the input that populates a random 6-character alphanumeric slug.
+
+### Validation (client-side, before any Supabase call)
+- Customer name: required, min 2 characters
+- Customer email: required, valid email format
+- Product type: required, must be one of the three options
+- Slug: required, min 3 characters, max 30, matches `/^[a-z0-9-]+$/`, no leading or trailing hyphens
+
+Show validation errors inline below each field in small `rose-500` text. Do not show all errors at once on first load — only show a field's error after the user has interacted with it (touched/blurred) or after a failed submit attempt.
+
+### On submit
+
+1. Disable all inputs and show "Creating…" on the button with a spinner
+2. Check slug uniqueness: query `nfc_items` for an existing row with the same slug. If it exists, show an inline error on the slug field: "This slug is already taken — try another" and stop.
+3. Insert into `nfc_items` — `slug`, `product_type`, `owner_id` (the newly created user's ID)
+4. Insert into `profiles` — `user_id` with empty defaults
+5. Call `supabase.auth.admin.inviteUserByEmail(email)` from a **Next.js API route** (`app/api/invite/route.js`) — never call admin auth methods from the client. The API route uses the service role client.
+6. On success:
+   - Close the modal
+   - Prepend the new row to the top of the local table state (optimistic — no refetch)
+   - Show a shadcn/ui `Toast` notification: "NFC item created — invite sent to {email}"
+7. On any error:
+   - Re-enable the form
+   - Show a non-dismissible error banner inside the modal above the submit button: "Something went wrong: {mapped error message}. Please try again."
+
+### Success state inside the modal (shown before closing)
+
+Before the modal auto-closes (after a 1.5s delay), briefly show a success screen inside the modal:
+- A green checkmark animation (CSS only, no library)
+- "Item created successfully"
+- The generated profile URL in a copyable code block: `https://beemhive.com/t/{slug}`
+- NFC Tools instruction in a muted info box:
+  > Open NFC Tools on your phone → tap Write → URL → paste the link above → tap your NFC card
+
+---
+
+## API route: invite user
+
+**File:** `app/api/invite/route.js`
+
+```js
+// POST /api/invite
+// Body: { email: string }
+// Uses service role client to call admin.inviteUserByEmail
+// Returns: { success: true } or { error: string }
+```
+
+This is the only place the service role client touches auth. Validate that the request comes with a valid admin session before firing the invite — check the Authorization header using the anon client's `getUser()`.
+
+---
+
+## Actions: Resend invite
+
+In the row's dropdown menu, "Resend invite" calls the same `/api/invite` route with the customer's email. Show a toast on success: "Invite resent to {email}".
+
+---
+
+## Actions: Delete
+
+Show a shadcn/ui `AlertDialog` confirmation before deleting — "Are you sure? This will permanently delete the NFC item and all its tap history. This cannot be undone." Two buttons: "Cancel" and "Delete" (destructive `rose-600` color). On confirm, optimistically remove from local state and call Supabase delete.
+
+---
+
+## File structure output expected
+
+```
+app/
+├── (admin)/
+│   └── nfc-items/
+│       └── page.js
+└── api/
+    └── invite/
+        └── route.js
+
+components/
+└── admin/
+    ├── nfc-items-table.js
+    └── create-nfc-item-modal.js
+```
+
+Keep `page.js` thin — it composes `<NfcItemsTable>` which internally uses `<CreateNfcItemModal>`.
+
+---
+
+## shadcn/ui components to install
+
+```bash
+npx shadcn@latest add dialog select switch dropdown-menu alert-dialog toast skeleton badge
+```
+
+---
+
+## What NOT to do
+
+- Do not make per-row Supabase requests for tap counts — fetch counts in the initial query
+- Do not call `supabase.auth.admin.*` methods from a Client Component or any client-side code — only from the API route
+- Do not use `<form>` tags — use div + onClick handlers
+- Do not install `date-fns`, `moment`, or `dayjs` — use `Intl.DateTimeFormat`
+- Do not install a debounce library — implement with `useRef` timer
+- Do not refetch the full table after create/delete/toggle — use optimistic local state updates
+- Do not show raw Supabase error messages to the user — map them to friendly strings
+- Do not close the modal immediately on success — show the success screen with the URL and NFC Tools instructions first
