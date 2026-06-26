@@ -229,8 +229,8 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 - [x] Middleware — route protection
 - [ ] Login page, invite accept page, password reset page
 - [ ] Admin layout + sidebar
-- [ ] Admin: create NFC item form
-- [ ] Admin: NFC items table
+- [x] Admin: create NFC item form
+- [x] Admin: NFC items table
 - [ ] Admin: customer list
 - [ ] Admin: platform analytics
 - [ ] Customer layout + sidebar
