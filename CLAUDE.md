@@ -228,10 +228,10 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 - [x] Auth config in Supabase dashboard (invite redirect URLs, email templates)
 - [x] Middleware — route protection
 - [ ] Login page, invite accept page, password reset page
-- [ ] Admin layout + sidebar
+- [x] Admin layout + sidebar
 - [x] Admin: create NFC item form
 - [x] Admin: NFC items table
-- [ ] Admin: customer list
+- [x] Admin: customer list
 - [ ] Admin: platform analytics
 - [ ] Customer layout + sidebar
 - [ ] Customer: profile builder (photo, bio, links, drag-to-reorder, live preview)

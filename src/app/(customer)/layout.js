@@ -1,0 +1,87 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '../../../lib/supabase/client'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { CustomerProfileProvider } from '@/components/customer/customer-profile-context'
+import CustomerSidebar from '@/components/customer/sidebar'
+import CustomerHeader from '@/components/customer/header'
+
+export default function CustomerLayout({ children }) {
+  const router = useRouter()
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [userId, setUserId] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    const collapsed = localStorage.getItem('beem_customer_sidebar_collapsed')
+    if (collapsed !== null) setIsCollapsed(collapsed === 'true')
+
+    const supabase = createClient()
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      const { data: roleData } = await supabase
+        .from('users_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (roleData?.role === 'admin') {
+        router.push('/admin/nfc-items')
+        return
+      }
+
+      setUserId(session.user.id)
+      setUserEmail(session.user.email ?? '')
+      setIsLoading(false)
+    })
+  }, [])
+
+  function handleToggleCollapse() {
+    setIsCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('beem_customer_sidebar_collapsed', String(next))
+      return next
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <TooltipProvider>
+      <CustomerProfileProvider userId={userId} userEmail={userEmail}>
+        <div className="flex h-screen overflow-hidden">
+          <CustomerSidebar
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onToggleCollapse={handleToggleCollapse}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            userEmail={userEmail}
+          />
+          <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+            <CustomerHeader
+              onOpenMobile={() => setIsMobileOpen(true)}
+              userEmail={userEmail}
+            />
+            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-6 md:p-4">
+              {children}
+            </main>
+          </div>
+        </div>
+      </CustomerProfileProvider>
+    </TooltipProvider>
+  )
+}
