@@ -1,112 +1,268 @@
-# Build: My Cards Page (`app/(customer)/my-cards/page.js`)
+# Build: Public NFC Profile Page (`app/t/[slug]/page.js`)
 
 ## Context
-Refer to CLAUDE.md for full project context, stack, folder structure, database schema, and Supabase client conventions before writing any code. Primary brand color is `emerald-600`. This page lives inside the customer layout shell — do not rebuild the sidebar or header.
+Refer to CLAUDE.md for full project context, stack, folder structure, database schema, and Supabase client conventions before writing any code. This page is outside the admin and customer layouts entirely — it has no sidebar, no header bar, no navigation. It is a completely standalone page.
 
 ---
 
 ## What to build
 
-A page at `app/(customer)/my-cards/page.js` showing all NFC items assigned to the logged-in customer. This is a read-focused page — the customer cannot create or delete cards here, only view them and access the information needed to program them.
+The public-facing profile page at `app/t/[slug]/page.js`. This is what a stranger sees when they tap a Beem Hive NFC card with their phone. It must be fast, beautiful, and work flawlessly on mobile without any login.
 
-This is a **Client Component** (`'use client'`).
-
----
-
-## Performance requirements
-
-- Fetch all NFC items for the current user in a **single Supabase query** — include tap count per item using Supabase's count feature, not separate per-item requests
-- On mount, immediately render skeleton cards while data loads — never a blank page or full-page spinner
-- Clipboard copy operations must use the modern `navigator.clipboard.writeText()` API with a graceful fallback to `document.execCommand('copy')` for older browsers
+This is a **React Server Component** — no `'use client'` directive at the top level. The tap event must be logged server-side before the page renders.
 
 ---
 
-## Page header
+## Performance requirements — this is the most performance-critical page in the entire project
 
-- **Left:** "My Cards" heading + muted subtitle "Your NFC products and profile links"
-- **Right:** A muted stat chip: "X cards" — renders once data loads, skeleton while loading
+- **Time to first byte must be minimal** — all data fetching and tap logging happens server-side before HTML is sent to the browser
+- **Minimal JavaScript** — this page should ship close to zero client-side JS. The only client-side interactions (copy button, save contact) can be isolated into small `'use client'` child components — the page shell itself stays a Server Component
+- **No layout shift** — profile photo dimensions are fixed; always render the photo container at its final size with a background color placeholder before the image loads (`bg-gray-200` fallback)
+- **Image optimisation** — use Next.js `<Image>` component for the profile photo with explicit `width` and `height` props. Never a raw `<img>` tag.
+- **No unnecessary re-renders** — since this is a Server Component, there are no re-renders by definition. Keep it that way.
 
 ---
 
-## Card grid layout
+## Data fetching — service role client only
 
-Render each NFC item as a card. Layout: `grid grid-cols-1 md:grid-cols-2 gap-5`. Each card is self-contained — no table, no list rows.
+This page is visited by anonymous strangers. They are not logged in. RLS will block all queries from anonymous users. Use `lib/supabase/server.js` (service role client) for every Supabase call on this page.
 
-### Each NFC item card
-
-**Card header:**
-- Product type icon — use a distinct lucide-react icon per type:
-  - Card → `CreditCard`
-  - Stand → `MonitorSmartphone`
-  - Round Tag → `Disc`
-- Product type label next to the icon: "NFC Card", "NFC Stand", "NFC Round Tag"
-- Status badge top-right — shadcn/ui `Badge`:
-  - Active → emerald, "Active"
-  - Inactive → gray, "Inactive"
-
-**Profile URL section:**
-A clearly labelled block inside the card:
-- Label: "Your profile URL" in small muted uppercase text
-- A read-only input field containing the full URL: `https://beemhive.com/t/{slug}`
-- A copy icon button (`Copy` from lucide-react) on the right edge of the input. On click:
-  - Copy URL to clipboard
-  - Icon changes to `Check` for 1.5 seconds then reverts
-  - Show a shadcn/ui `Toast`: "Copied to clipboard"
-- Below the input: a muted caption "Write this URL to your NFC card using NFC Tools"
-
-**Tap stats strip:**
-A subtle horizontal strip inside the card, separated by a `Separator`:
-- `MousePointerClick` icon + "X total taps" — all-time tap count for this specific card
-- `Zap` icon + "X taps today" — taps where `created_at` is today (compute client-side from fetched data, not a separate query)
-- `Clock` icon + "Last tap: X ago" — using `formatRelativeTime()` from `lib/utils.js`. If no taps yet: "No taps yet"
-
-**Action buttons row** at the bottom of the card:
-Two buttons side by side, full width split equally:
-
-1. "View Profile" — `ExternalLink` icon, outline variant. Opens `https://beemhive.com/t/{slug}` in a new tab.
-
-2. "NFC Setup" — `Smartphone` icon, ghost variant. Expands the NFC Tools instruction panel below (accordion-style toggle). Chevron icon rotates on expand.
-
-**NFC Tools instruction panel** (collapsed by default, smooth `transition-all duration-200` expand):
-
-A soft `amber-50` (light mode) / `amber-950` (dark mode) instruction box with `amber-200` border. Content:
-
-```
-How to program your NFC card
-
-1. Download "NFC Tools" — free on iOS and Android
-2. Open NFC Tools → tap "Write" → tap "Add a record" → select "URL/URI"
-3. Paste your profile URL:
-   [URL displayed in a copyable code block]
-4. Tap "Write / XX bytes" then hold your phone against your NFC card
-5. Done — your card now opens your Beem Hive profile when tapped
+**Step 1 — Fetch the NFC item by slug:**
+```js
+const { data: nfcItem } = await supabase
+  .from('nfc_items')
+  .select('id, is_active, owner_id, product_type')
+  .eq('slug', slug)
+  .single()
 ```
 
-The URL inside the instruction panel has its own copy button. Below the instructions, a small note in muted text: "You only need to do this once per card."
+**If `nfcItem` is null** (slug doesn't exist): call Next.js `notFound()` — renders the app's 404 page.
+
+**If `nfcItem.is_active === false`**: render the inactive card page (see below) — do not log a tap event for inactive cards.
+
+**Step 2 — Log the tap event (active cards only):**
+
+Before fetching the profile, log the tap. This fires server-side before the HTML is returned to the browser:
+
+```js
+// Extract device type from request headers
+const userAgent = headers().get('user-agent') || ''
+const isMobile = /mobile|android|iphone|ipad/i.test(userAgent)
+const deviceType = isMobile ? 'mobile' : 'desktop'
+
+// Hash the IP for deduplication — never store raw IPs
+const ip = headers().get('x-forwarded-for')?.split(',')[0] || 'unknown'
+const ipHash = await hashIp(ip) // see helper below
+
+// Deduplication check — skip if same ip_hash + nfc_item_id tapped within 5 minutes
+const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+const { count } = await supabase
+  .from('tap_events')
+  .select('*', { count: 'exact', head: true })
+  .eq('nfc_item_id', nfcItem.id)
+  .eq('ip_hash', ipHash)
+  .gte('created_at', fiveMinutesAgo)
+
+if (count === 0) {
+  await supabase.from('tap_events').insert({
+    nfc_item_id: nfcItem.id,
+    device_type: deviceType,
+    referrer: headers().get('referer') || null,
+    ip_hash: ipHash,
+  })
+}
+```
+
+**IP hash helper** — write this as a pure async function in `lib/utils.js`:
+```js
+export async function hashIp(ip) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(ip + process.env.IP_HASH_SALT)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
+}
+```
+
+Add `IP_HASH_SALT` to `.env.local` — any random string, e.g. `beem_hive_salt_2024`. This prevents rainbow table attacks on the hashed IPs.
+
+**Step 3 — Fetch the profile:**
+```js
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('name, title, bio, photo_url, links, show_save_contact, background')
+  .eq('user_id', nfcItem.owner_id)
+  .single()
+```
+
+If `profile` is null (shouldn't happen in normal operation, but defensive): render the inactive card page with the message "This profile hasn't been set up yet."
 
 ---
 
-## Empty state
+## Active profile page
 
-If the customer has no NFC items assigned:
-- Centered illustration area — a large muted `CreditCard` icon (80px, `text-gray-300`)
-- "No cards yet" heading
-- "Your NFC cards will appear here once they've been set up by Beem Hive" subtext in muted text
-- No action button — customer cannot self-assign cards
+### Background
+
+The page background uses the customer's chosen `background` value from `profiles.background`. This is either:
+- A hex color: `#1a1a2e` → apply as `style={{ backgroundColor: '#1a1a2e' }}`
+- A gradient string: `linear-gradient(135deg, #1a1a2e, #16213e)` → apply as `style={{ background: 'linear-gradient(...)' }}`
+- Null (not set): fall back to a default — `linear-gradient(135deg, #0f172a, #1e293b)` (a deep slate gradient)
+
+The background covers the full viewport — `min-h-screen w-full`.
+
+Determine if the background is light or dark to set text colors appropriately. A simple heuristic: if the background value contains any of `#f`, `#e`, `#d`, `white`, or `light`, treat as light background (dark text). Otherwise treat as dark background (light text). Use this to set `text-white` vs `text-gray-900` on all text elements.
+
+### Layout
+
+Centered single column. `max-w-sm mx-auto px-4 py-10`. Everything stacked vertically with consistent spacing.
+
+### Profile photo
+
+Circular, 96px diameter. Use Next.js `<Image>` with `width={96}` `height={96}` `className="rounded-full object-cover"`. 
+
+- If `photo_url` exists: render the image from Supabase Storage
+- If null: render a fallback circle (`bg-emerald-600 rounded-full w-24 h-24`) with the customer's initial centered in white bold text
+
+Add a subtle white ring around the circle: `ring-2 ring-white/20`
+
+### Name, title, bio
+
+- Name: large, bold, centered. Use the light/dark text color determined from background.
+- Title: medium weight, slightly muted (white/70 on dark, gray-600 on light), centered
+- Bio: small, centered, max 3 lines with `line-clamp-3`, slightly more muted. Only render if `bio` is not null/empty.
+
+All three use `text-shadow` subtly for legibility on gradient backgrounds — apply via inline style: `textShadow: '0 1px 3px rgba(0,0,0,0.3)'` on dark backgrounds, none on light.
+
+### Link buttons
+
+Map `profile.links` array and render each as a button. Links are ordered — render in array order (the order the customer set in the profile builder).
+
+Each link button:
+- Full width, `rounded-xl`, `py-3 px-4`
+- Background: `rgba(255,255,255,0.12)` on dark backgrounds, `rgba(0,0,0,0.07)` on light — a subtle frosted effect
+- Border: `1px solid rgba(255,255,255,0.2)` on dark, `1px solid rgba(0,0,0,0.1)` on light
+- Hover: `rgba(255,255,255,0.2)` on dark, `rgba(0,0,0,0.12)` on light — but since this is a Server Component, handle hover with a plain CSS class in a `<style>` tag or Tailwind's `hover:` variant via a thin client component wrapper
+- Left: type icon (lucide-react, same icon mapping as the profile builder) + link label/type name
+- Right: `ExternalLink` icon, small, muted
+
+Map link types to display labels:
+- `website` → "Website"
+- `instagram` → "Instagram"
+- `twitter` → "Twitter / X"
+- `linkedin` → "LinkedIn"
+- `whatsapp` → "WhatsApp"
+- `phone` → "Phone"
+- `email` → "Email"
+- `custom` → use the URL domain as the label, e.g. `mysite.com` extracted with `new URL(url).hostname`
+
+Each link button is a plain `<a href={url} target="_blank" rel="noopener noreferrer">` — no onClick needed, native anchor behaviour is correct here.
+
+If `links` is empty or null: do not render the links section at all.
+
+### Save contact button
+
+Only rendered if `profile.show_save_contact === true`.
+
+A distinct button below the links — slightly different style to stand out:
+- Background: `emerald-500` or `emerald-600` — solid, not frosted
+- Text: white, "Save Contact"
+- Left icon: `Contact` or `UserPlus` (lucide-react)
+- Full width, `rounded-xl`, `py-3`
+
+This button triggers a `.vcf` file download. Since this is a Server Component, the save contact button must be a small `'use client'` component:
+
+**File:** `components/public/save-contact-button.js`
+
+On click, the client component calls `GET /api/vcard?userId={owner_id}` which returns a `.vcf` file as a download.
+
+**API route:** `app/api/vcard/route.js`
+
+```js
+// GET /api/vcard?userId={userId}
+// Fetches the user's profile using service role client
+// Generates a .vcf string
+// Returns with headers:
+//   Content-Type: text/vcard
+//   Content-Disposition: attachment; filename="{name}.vcf"
+```
+
+vCard format to generate:
+```
+BEGIN:VCARD
+VERSION:3.0
+FN:{name}
+TITLE:{title}
+NOTE:{bio}
+URL:{first website link if exists}
+TEL:{phone link if exists}
+EMAIL:{email link if exists}
+END:VCARD
+```
+
+Only include fields that exist in the profile — omit null/empty lines.
+
+### Powered by Beem Hive footer
+
+At the very bottom of the page, below all content. Centered:
+
+- Small Beem Hive logo mark (a small `emerald-400` circle or icon)
+- "Powered by Beem Hive" in small muted text (white/40 on dark, gray-400 on light)
+- The whole footer is a link to `https://beemhive.com` — `target="_blank"`
 
 ---
 
-## Loading state
+## Inactive card page
 
-Render 2 skeleton cards (`animate-pulse`) in the grid while data loads. Each skeleton mirrors the real card dimensions — header area, URL block, stats strip, action buttons. Use shadcn/ui `Skeleton`.
+Rendered when `nfcItem.is_active === false` or profile is null.
+
+Same background pattern (use the default gradient since there's no profile to read from). Centered content:
+
+- A large `CreditCard` icon — muted, `text-white/30`
+- "This card is not active" in medium white text
+- "This NFC card has been temporarily deactivated." in small muted white text
+- "Powered by Beem Hive" footer — same as active page
+
+No other content, no links, no way to navigate anywhere.
 
 ---
 
-## Inactive card notice
+## Theme picker addition to profile builder
 
-If any card has `is_active = false`, show a subtle notice inside that card below the status badge:
+Since customers can choose their background, add a **Section 5 — Profile theme** to the existing profile builder page (`app/(customer)/profile/page.js`) below the save contact toggle.
 
-An amber warning strip: "This card is currently inactive. Your profile page will not be accessible until it is reactivated by Beem Hive."
+This section should be added to the profile builder prompt's component — add it now alongside this build:
+
+**Section header:** "Profile theme" + muted description: "Choose the background for your public profile page"
+
+**Preset options:** A grid of clickable swatches (`grid grid-cols-4 gap-3`). Each swatch is a 56×56px rounded square showing the color or gradient. Clicking selects it — show a white checkmark overlay on the selected swatch.
+
+Presets to include (value is what gets stored in `profiles.background`):
+
+| Name | Value |
+|---|---|
+| Midnight | `linear-gradient(135deg, #0f172a, #1e293b)` |
+| Forest | `linear-gradient(135deg, #052e16, #14532d)` |
+| Ocean | `linear-gradient(135deg, #0c4a6e, #0ea5e9)` |
+| Dusk | `linear-gradient(135deg, #2e1065, #4c1d95)` |
+| Sunset | `linear-gradient(135deg, #7c2d12, #c2410c)` |
+| Rose | `linear-gradient(135deg, #881337, #e11d48)` |
+| Slate | `linear-gradient(135deg, #1e293b, #475569)` |
+| Pure Black | `#000000` |
+
+Default selection if `profile.background` is null: Midnight.
+
+Theme changes are included in the manual save — not auto-saved. Include the `background` field in the save payload.
+
+---
+
+## 404 page
+
+Create `app/t/[slug]/not-found.js` — a simple custom 404 for the `/t/` namespace:
+- Same dark gradient background as the inactive card page
+- Large `Search` icon, muted
+- "Profile not found"
+- "This link doesn't match any Beem Hive profile."
+- Powered by Beem Hive footer
 
 ---
 
@@ -114,33 +270,43 @@ An amber warning strip: "This card is currently inactive. Your profile page will
 
 ```
 app/
-└── (customer)/
-    └── my-cards/
-        └── page.js
+├── t/
+│   └── [slug]/
+│       ├── page.js              ← Server Component
+│       └── not-found.js         ← Custom 404
+└── api/
+    └── vcard/
+        └── route.js             ← vCard generator API route
 
 components/
-└── customer/
-    └── nfc-card-item.js    ← individual card component
-```
+└── public/
+    ├── link-button.js           ← thin 'use client' for hover states if needed
+    └── save-contact-button.js   ← 'use client' — handles file download
 
-Keep `page.js` thin — fetches data, renders a grid of `<NfcCardItem>` components.
+lib/
+└── utils.js                     ← add hashIp() here alongside formatRelativeTime()
+```
 
 ---
 
-## shadcn/ui components to install
+## Environment variables to add
 
-```bash
-npx shadcn@latest add badge separator toast skeleton
+```
+IP_HASH_SALT=your_random_string_here
 ```
 
 ---
 
 ## What NOT to do
 
-- Do not make per-card Supabase requests for tap counts — fetch counts in the initial query
-- Do not compute "taps today" with a separate Supabase query — derive it client-side from the already-fetched tap data
-- Do not show a full-page spinner — use skeleton cards
-- Do not open the profile URL in the same tab — always `target="_blank"` with `rel="noopener noreferrer"`
-- Do not install a clipboard library — use `navigator.clipboard.writeText()` with an `execCommand` fallback
-- Do not use `<form>` tags
-- Do not show raw Supabase error messages to the user
+- Do not add `'use client'` to `page.js` — this must be a Server Component
+- Do not use the anon Supabase client on this page — anonymous visitors are blocked by RLS, always use the service role client
+- Do not log the tap event client-side — it fires server-side before HTML is rendered
+- Do not log tap events for inactive cards
+- Do not store raw IP addresses — always hash first using `hashIp()`
+- Do not use a raw `<img>` tag for the profile photo — use Next.js `<Image>`
+- Do not use an `<iframe>` anywhere on this page
+- Do not install a vCard generation library — build the `.vcf` string manually
+- Do not add any navigation, sidebar, or header chrome — this is a fully standalone page
+- Do not skip the deduplication check — same IP tapping the same card within 5 minutes must only count as one tap
+- Do not forget `rel="noopener noreferrer"` on all external links
