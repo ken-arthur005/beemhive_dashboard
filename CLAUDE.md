@@ -233,9 +233,9 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 - [x] Admin: NFC items table
 - [x] Admin: customer list
 - [ ] Admin: platform analytics
-- [ ] Customer layout + sidebar
-- [ ] Customer: profile builder (photo, bio, links, drag-to-reorder, live preview)
-- [ ] Customer: my cards page
+- [x] Customer layout + sidebar
+- [x] Customer: profile builder (photo, bio, links, drag-to-reorder, live preview)
+- [] Customer: my cards page
 - [ ] Customer: personal analytics
 - [ ] Public: `/t/[slug]` profile page + tap logging
 - [ ] Email templates via Resend

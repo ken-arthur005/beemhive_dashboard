@@ -1,0 +1,146 @@
+# Build: My Cards Page (`app/(customer)/my-cards/page.js`)
+
+## Context
+Refer to CLAUDE.md for full project context, stack, folder structure, database schema, and Supabase client conventions before writing any code. Primary brand color is `emerald-600`. This page lives inside the customer layout shell — do not rebuild the sidebar or header.
+
+---
+
+## What to build
+
+A page at `app/(customer)/my-cards/page.js` showing all NFC items assigned to the logged-in customer. This is a read-focused page — the customer cannot create or delete cards here, only view them and access the information needed to program them.
+
+This is a **Client Component** (`'use client'`).
+
+---
+
+## Performance requirements
+
+- Fetch all NFC items for the current user in a **single Supabase query** — include tap count per item using Supabase's count feature, not separate per-item requests
+- On mount, immediately render skeleton cards while data loads — never a blank page or full-page spinner
+- Clipboard copy operations must use the modern `navigator.clipboard.writeText()` API with a graceful fallback to `document.execCommand('copy')` for older browsers
+
+---
+
+## Page header
+
+- **Left:** "My Cards" heading + muted subtitle "Your NFC products and profile links"
+- **Right:** A muted stat chip: "X cards" — renders once data loads, skeleton while loading
+
+---
+
+## Card grid layout
+
+Render each NFC item as a card. Layout: `grid grid-cols-1 md:grid-cols-2 gap-5`. Each card is self-contained — no table, no list rows.
+
+### Each NFC item card
+
+**Card header:**
+- Product type icon — use a distinct lucide-react icon per type:
+  - Card → `CreditCard`
+  - Stand → `MonitorSmartphone`
+  - Round Tag → `Disc`
+- Product type label next to the icon: "NFC Card", "NFC Stand", "NFC Round Tag"
+- Status badge top-right — shadcn/ui `Badge`:
+  - Active → emerald, "Active"
+  - Inactive → gray, "Inactive"
+
+**Profile URL section:**
+A clearly labelled block inside the card:
+- Label: "Your profile URL" in small muted uppercase text
+- A read-only input field containing the full URL: `https://beemhive.com/t/{slug}`
+- A copy icon button (`Copy` from lucide-react) on the right edge of the input. On click:
+  - Copy URL to clipboard
+  - Icon changes to `Check` for 1.5 seconds then reverts
+  - Show a shadcn/ui `Toast`: "Copied to clipboard"
+- Below the input: a muted caption "Write this URL to your NFC card using NFC Tools"
+
+**Tap stats strip:**
+A subtle horizontal strip inside the card, separated by a `Separator`:
+- `MousePointerClick` icon + "X total taps" — all-time tap count for this specific card
+- `Zap` icon + "X taps today" — taps where `created_at` is today (compute client-side from fetched data, not a separate query)
+- `Clock` icon + "Last tap: X ago" — using `formatRelativeTime()` from `lib/utils.js`. If no taps yet: "No taps yet"
+
+**Action buttons row** at the bottom of the card:
+Two buttons side by side, full width split equally:
+
+1. "View Profile" — `ExternalLink` icon, outline variant. Opens `https://beemhive.com/t/{slug}` in a new tab.
+
+2. "NFC Setup" — `Smartphone` icon, ghost variant. Expands the NFC Tools instruction panel below (accordion-style toggle). Chevron icon rotates on expand.
+
+**NFC Tools instruction panel** (collapsed by default, smooth `transition-all duration-200` expand):
+
+A soft `amber-50` (light mode) / `amber-950` (dark mode) instruction box with `amber-200` border. Content:
+
+```
+How to program your NFC card
+
+1. Download "NFC Tools" — free on iOS and Android
+2. Open NFC Tools → tap "Write" → tap "Add a record" → select "URL/URI"
+3. Paste your profile URL:
+   [URL displayed in a copyable code block]
+4. Tap "Write / XX bytes" then hold your phone against your NFC card
+5. Done — your card now opens your Beem Hive profile when tapped
+```
+
+The URL inside the instruction panel has its own copy button. Below the instructions, a small note in muted text: "You only need to do this once per card."
+
+---
+
+## Empty state
+
+If the customer has no NFC items assigned:
+- Centered illustration area — a large muted `CreditCard` icon (80px, `text-gray-300`)
+- "No cards yet" heading
+- "Your NFC cards will appear here once they've been set up by Beem Hive" subtext in muted text
+- No action button — customer cannot self-assign cards
+
+---
+
+## Loading state
+
+Render 2 skeleton cards (`animate-pulse`) in the grid while data loads. Each skeleton mirrors the real card dimensions — header area, URL block, stats strip, action buttons. Use shadcn/ui `Skeleton`.
+
+---
+
+## Inactive card notice
+
+If any card has `is_active = false`, show a subtle notice inside that card below the status badge:
+
+An amber warning strip: "This card is currently inactive. Your profile page will not be accessible until it is reactivated by Beem Hive."
+
+---
+
+## File structure output expected
+
+```
+app/
+└── (customer)/
+    └── my-cards/
+        └── page.js
+
+components/
+└── customer/
+    └── nfc-card-item.js    ← individual card component
+```
+
+Keep `page.js` thin — fetches data, renders a grid of `<NfcCardItem>` components.
+
+---
+
+## shadcn/ui components to install
+
+```bash
+npx shadcn@latest add badge separator toast skeleton
+```
+
+---
+
+## What NOT to do
+
+- Do not make per-card Supabase requests for tap counts — fetch counts in the initial query
+- Do not compute "taps today" with a separate Supabase query — derive it client-side from the already-fetched tap data
+- Do not show a full-page spinner — use skeleton cards
+- Do not open the profile URL in the same tab — always `target="_blank"` with `rel="noopener noreferrer"`
+- Do not install a clipboard library — use `navigator.clipboard.writeText()` with an `execCommand` fallback
+- Do not use `<form>` tags
+- Do not show raw Supabase error messages to the user
