@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 
-const EMPTY_FIELDS = { customerName: '', customerEmail: '', productType: '', slug: '' }
-const EMPTY_TOUCHED = { customerName: false, customerEmail: false, productType: false, slug: false }
+const EMPTY_FIELDS = { customerName: '', customerEmail: '', confirmEmail: '', productType: '', slug: '' }
+const EMPTY_TOUCHED = { customerName: false, customerEmail: false, confirmEmail: false, productType: false, slug: false }
 
 function validate(fields, touched) {
   const errors = {}
@@ -56,9 +56,21 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
   const [createdSlug, setCreatedSlug] = useState('')
 
   const errors = validate(fields, touched)
+  const confirmMismatch =
+    fields.confirmEmail.length > 0 &&
+    fields.customerEmail.toLowerCase() !== fields.confirmEmail.toLowerCase()
 
   function setField(name, value) {
-    setFields(prev => ({ ...prev, [name]: value }))
+    setFields(prev => {
+      const next = { ...prev, [name]: value }
+      if (name === 'customerEmail' && prev.confirmEmail !== '') {
+        next.confirmEmail = ''
+      }
+      return next
+    })
+    if (name === 'customerEmail') {
+      setTouched(prev => ({ ...prev, confirmEmail: false }))
+    }
   }
 
   function touch(name) {
@@ -79,10 +91,11 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
   }, [])
 
   async function handleSubmit() {
-    const allTouched = { customerName: true, customerEmail: true, productType: true, slug: true }
+    const allTouched = { customerName: true, customerEmail: true, confirmEmail: true, productType: true, slug: true }
     setTouched(allTouched)
     const errs = validate(fields, allTouched)
     if (Object.keys(errs).length > 0) return
+    if (fields.customerEmail.toLowerCase() !== fields.confirmEmail.toLowerCase()) return
 
     setSubmitting(true)
     setErrorBanner(null)
@@ -239,6 +252,23 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
                   className={inputClass}
                 />
                 {errors.customerEmail && <p className={errorClass}>{errors.customerEmail}</p>}
+              </div>
+
+              {/* Confirm customer email */}
+              <div>
+                <label className={labelClass}>Confirm customer email</label>
+                <input
+                  type="email"
+                  value={fields.confirmEmail}
+                  onChange={e => { setField('confirmEmail', e.target.value); touch('confirmEmail') }}
+                  onBlur={() => touch('confirmEmail')}
+                  placeholder="Re-enter email address"
+                  disabled={submitting}
+                  className={inputClass}
+                />
+                {confirmMismatch && (
+                  <p className={errorClass}>Email addresses don't match</p>
+                )}
               </div>
 
               {/* Product type */}
