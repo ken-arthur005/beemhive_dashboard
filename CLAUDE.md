@@ -232,11 +232,11 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 - [x] Admin: create NFC item form
 - [x] Admin: NFC items table
 - [x] Admin: customer list
-- [ ] Admin: platform analytics
+- [x] Admin: platform analytics
 - [x] Customer layout + sidebar
 - [x] Customer: profile builder (photo, bio, links, drag-to-reorder, live preview)
-- [] Customer: my cards page
-- [ ] Customer: personal analytics
+- [x] Customer: my cards page
+- [x] Customer: personal analytics
 - [ ] Public: `/t/[slug]` profile page + tap logging
 - [ ] Email templates via Resend
 - [ ] Supabase Storage bucket for profile photos

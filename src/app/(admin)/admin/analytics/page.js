@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTheme } from 'next-themes'
 import { BarChart2 } from 'lucide-react'
-import { createClient } from '../../../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import AnalyticsStats from '@/components/admin/analytics-stats'
 import TopItemsList from '@/components/admin/top-items-list'
 import ActivityFeed from '@/components/admin/activity-feed'

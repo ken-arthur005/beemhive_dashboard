@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { CustomerProfileProvider } from '@/components/customer/customer-profile-context'
 import CustomerSidebar from '@/components/customer/sidebar'

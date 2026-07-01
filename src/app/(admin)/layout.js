@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import Sidebar from '@/components/admin/sidebar'
 import Header from '@/components/admin/header'

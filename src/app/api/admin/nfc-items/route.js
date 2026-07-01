@@ -1,4 +1,4 @@
-import { createClient } from '../../../../../lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { createBrowserClient } from '@supabase/ssr'
 
 function anonClient() {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTheme } from 'next-themes'
-import { createClient } from '../../../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { MousePointerClick, Zap, TrendingUp, Contact, CreditCard, BarChart2, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'

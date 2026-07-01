@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Shuffle, Copy, Check } from 'lucide-react'
-import { createClient } from '../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -37,9 +37,10 @@ function validate(fields, touched) {
   return errors
 }
 
-function mapApiError(err) {
+function mapApiError(err, code) {
   if (!err) return 'Something went wrong. Please try again.'
   if (err === 'slug_taken') return 'This slug is already taken — try another.'
+  if (code === 'over_email_send_rate_limit') return 'Email rate limit reached. Wait a few minutes and try again.'
   if (err.includes('already registered') || err.includes('already been registered')) return 'This email is already registered.'
   return 'Something went wrong. Please try again.'
 }
@@ -116,7 +117,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
       if (res.status === 409 || json.error === 'slug_taken') {
         setSlugFieldError('This slug is already taken — try another')
       } else {
-        setErrorBanner(mapApiError(json.error))
+        setErrorBanner(mapApiError(json.error, json.code))
       }
       setSubmitting(false)
       return

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { CreditCard } from 'lucide-react'
-import { createClient } from '../../../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
 import NfcCardItem from '@/components/customer/nfc-card-item'
 

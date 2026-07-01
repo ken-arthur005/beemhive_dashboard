@@ -1,268 +1,131 @@
-# Build: Public NFC Profile Page (`app/t/[slug]/page.js`)
+# Build: Invite Accept Page (`app/(auth)/invite/page.js`)
 
 ## Context
-Refer to CLAUDE.md for full project context, stack, folder structure, database schema, and Supabase client conventions before writing any code. This page is outside the admin and customer layouts entirely — it has no sidebar, no header bar, no navigation. It is a completely standalone page.
+Refer to CLAUDE.md for full project context, stack, folder structure, and Supabase client conventions before writing any code. This page lives inside the `(auth)` route group — no sidebar, no header, no dashboard chrome. Match the visual style of the login page exactly — same centered card layout, same Beem Hive wordmark at the top.
 
 ---
 
 ## What to build
 
-The public-facing profile page at `app/t/[slug]/page.js`. This is what a stranger sees when they tap a Beem Hive NFC card with their phone. It must be fast, beautiful, and work flawlessly on mobile without any login.
+The page a new customer lands on after clicking the invite link in their email. This is their very first experience of the Beem Hive platform — it needs to feel welcoming, clear, and fast.
 
-This is a **React Server Component** — no `'use client'` directive at the top level. The tap event must be logged server-side before the page renders.
+The invite link Supabase sends looks like:
+`https://beemhive.com/invite?token_hash=xxx&type=invite`
 
----
+Next.js receives this as a page with query parameters. The token must be exchanged for a session before the customer can set their password.
 
-## Performance requirements — this is the most performance-critical page in the entire project
-
-- **Time to first byte must be minimal** — all data fetching and tap logging happens server-side before HTML is sent to the browser
-- **Minimal JavaScript** — this page should ship close to zero client-side JS. The only client-side interactions (copy button, save contact) can be isolated into small `'use client'` child components — the page shell itself stays a Server Component
-- **No layout shift** — profile photo dimensions are fixed; always render the photo container at its final size with a background color placeholder before the image loads (`bg-gray-200` fallback)
-- **Image optimisation** — use Next.js `<Image>` component for the profile photo with explicit `width` and `height` props. Never a raw `<img>` tag.
-- **No unnecessary re-renders** — since this is a Server Component, there are no re-renders by definition. Keep it that way.
+This is a **Client Component** (`'use client'`).
 
 ---
 
-## Data fetching — service role client only
+## Page load sequence
 
-This page is visited by anonymous strangers. They are not logged in. RLS will block all queries from anonymous users. Use `lib/supabase/server.js` (service role client) for every Supabase call on this page.
-
-**Step 1 — Fetch the NFC item by slug:**
-```js
-const { data: nfcItem } = await supabase
-  .from('nfc_items')
-  .select('id, is_active, owner_id, product_type')
-  .eq('slug', slug)
-  .single()
-```
-
-**If `nfcItem` is null** (slug doesn't exist): call Next.js `notFound()` — renders the app's 404 page.
-
-**If `nfcItem.is_active === false`**: render the inactive card page (see below) — do not log a tap event for inactive cards.
-
-**Step 2 — Log the tap event (active cards only):**
-
-Before fetching the profile, log the tap. This fires server-side before the HTML is returned to the browser:
+On mount, before rendering the form, extract and verify the token from the URL:
 
 ```js
-// Extract device type from request headers
-const userAgent = headers().get('user-agent') || ''
-const isMobile = /mobile|android|iphone|ipad/i.test(userAgent)
-const deviceType = isMobile ? 'mobile' : 'desktop'
+import { useSearchParams } from 'next/navigation'
 
-// Hash the IP for deduplication — never store raw IPs
-const ip = headers().get('x-forwarded-for')?.split(',')[0] || 'unknown'
-const ipHash = await hashIp(ip) // see helper below
-
-// Deduplication check — skip if same ip_hash + nfc_item_id tapped within 5 minutes
-const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-const { count } = await supabase
-  .from('tap_events')
-  .select('*', { count: 'exact', head: true })
-  .eq('nfc_item_id', nfcItem.id)
-  .eq('ip_hash', ipHash)
-  .gte('created_at', fiveMinutesAgo)
-
-if (count === 0) {
-  await supabase.from('tap_events').insert({
-    nfc_item_id: nfcItem.id,
-    device_type: deviceType,
-    referrer: headers().get('referer') || null,
-    ip_hash: ipHash,
-  })
-}
+const searchParams = useSearchParams()
+const tokenHash = searchParams.get('token_hash')
+const type = searchParams.get('type')
 ```
 
-**IP hash helper** — write this as a pure async function in `lib/utils.js`:
-```js
-export async function hashIp(ip) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(ip + process.env.IP_HASH_SALT)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
-}
-```
+If `token_hash` is missing or `type` is not `'invite'` → render the **invalid link state** (see below) immediately, do not show the form.
 
-Add `IP_HASH_SALT` to `.env.local` — any random string, e.g. `beem_hive_salt_2024`. This prevents rainbow table attacks on the hashed IPs.
-
-**Step 3 — Fetch the profile:**
-```js
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('name, title, bio, photo_url, links, show_save_contact, background')
-  .eq('user_id', nfcItem.owner_id)
-  .single()
-```
-
-If `profile` is null (shouldn't happen in normal operation, but defensive): render the inactive card page with the message "This profile hasn't been set up yet."
+If token is present → render the form. The token is exchanged with Supabase only when the customer submits their new password — not on page load.
 
 ---
 
-## Active profile page
+## UI layout
 
-### Background
+Same centered card layout as the login page. `max-w-md mx-auto` card, vertically centered on full viewport height.
 
-The page background uses the customer's chosen `background` value from `profiles.background`. This is either:
-- A hex color: `#1a1a2e` → apply as `style={{ backgroundColor: '#1a1a2e' }}`
-- A gradient string: `linear-gradient(135deg, #1a1a2e, #16213e)` → apply as `style={{ background: 'linear-gradient(...)' }}`
-- Null (not set): fall back to a default — `linear-gradient(135deg, #0f172a, #1e293b)` (a deep slate gradient)
+**Inside the card, top to bottom:**
 
-The background covers the full viewport — `min-h-screen w-full`.
+1. Beem Hive wordmark — centered, same as login page. Comment: `{/* TODO: replace with logo asset */}`
+2. A soft emerald welcome icon — a `UserCheck` icon (lucide-react) inside a soft `emerald-100` circle, centered. 48px icon.
+3. Heading: "You've been invited" — bold, centered
+4. Subheading: "Set a password to activate your Beem Hive account" — muted, centered, smaller
+5. Password field — label: "Choose a password", `type="password"`, show/hide toggle (same `Eye` / `EyeOff` pattern as login page)
+6. Confirm password field — label: "Confirm password", `type="password"`, show/hide toggle
+7. Password strength indicator — see below
+8. Primary button — full width, `emerald-600`, "Activate my account". Spinner + "Activating…" while submitting.
 
-Determine if the background is light or dark to set text colors appropriately. A simple heuristic: if the background value contains any of `#f`, `#e`, `#d`, `white`, or `light`, treat as light background (dark text). Otherwise treat as dark background (light text). Use this to set `text-white` vs `text-gray-900` on all text elements.
+---
 
-### Layout
+## Password strength indicator
 
-Centered single column. `max-w-sm mx-auto px-4 py-10`. Everything stacked vertically with consistent spacing.
+A thin bar directly below the password field that updates in real time as the user types. Four levels:
 
-### Profile photo
+| Level | Condition | Bar color | Label |
+|---|---|---|---|
+| Too short | < 8 characters | `rose-400` | "Too short" |
+| Weak | ≥ 8 chars, only one character type | `amber-400` | "Weak" |
+| Good | ≥ 8 chars, two character types | `blue-400` | "Good" |
+| Strong | ≥ 10 chars, three or more character types (uppercase, lowercase, number, symbol) | `emerald-500` | "Strong" |
 
-Circular, 96px diameter. Use Next.js `<Image>` with `width={96}` `height={96}` `className="rounded-full object-cover"`. 
+Character types: uppercase letters, lowercase letters, numbers, symbols (`!@#$%^&*` etc.).
 
-- If `photo_url` exists: render the image from Supabase Storage
-- If null: render a fallback circle (`bg-emerald-600 rounded-full w-24 h-24`) with the customer's initial centered in white bold text
+The bar is a full-width track with a colored fill that animates width with `transition-all duration-300`. The label appears as small text to the right of the bar.
 
-Add a subtle white ring around the circle: `ring-2 ring-white/20`
+Minimum password requirement to allow submit: 8 characters. Show inline error below the field if they try to submit with fewer: "Password must be at least 8 characters."
 
-### Name, title, bio
+---
 
-- Name: large, bold, centered. Use the light/dark text color determined from background.
-- Title: medium weight, slightly muted (white/70 on dark, gray-600 on light), centered
-- Bio: small, centered, max 3 lines with `line-clamp-3`, slightly more muted. Only render if `bio` is not null/empty.
+## Validation (client-side, before Supabase call)
 
-All three use `text-shadow` subtly for legibility on gradient backgrounds — apply via inline style: `textShadow: '0 1px 3px rgba(0,0,0,0.3)'` on dark backgrounds, none on light.
+- Password: minimum 8 characters. Show error on blur or failed submit.
+- Confirm password: must match password exactly. Show error message "Passwords don't match" inline below the confirm field — update in real time as they type the second field (don't wait for blur).
 
-### Link buttons
+Do not show all errors upfront — only show a field's error after the user has touched it or after a failed submit attempt.
 
-Map `profile.links` array and render each as a button. Links are ordered — render in array order (the order the customer set in the profile builder).
+---
 
-Each link button:
-- Full width, `rounded-xl`, `py-3 px-4`
-- Background: `rgba(255,255,255,0.12)` on dark backgrounds, `rgba(0,0,0,0.07)` on light — a subtle frosted effect
-- Border: `1px solid rgba(255,255,255,0.2)` on dark, `1px solid rgba(0,0,0,0.1)` on light
-- Hover: `rgba(255,255,255,0.2)` on dark, `rgba(0,0,0,0.12)` on light — but since this is a Server Component, handle hover with a plain CSS class in a `<style>` tag or Tailwind's `hover:` variant via a thin client component wrapper
-- Left: type icon (lucide-react, same icon mapping as the profile builder) + link label/type name
-- Right: `ExternalLink` icon, small, muted
-
-Map link types to display labels:
-- `website` → "Website"
-- `instagram` → "Instagram"
-- `twitter` → "Twitter / X"
-- `linkedin` → "LinkedIn"
-- `whatsapp` → "WhatsApp"
-- `phone` → "Phone"
-- `email` → "Email"
-- `custom` → use the URL domain as the label, e.g. `mysite.com` extracted with `new URL(url).hostname`
-
-Each link button is a plain `<a href={url} target="_blank" rel="noopener noreferrer">` — no onClick needed, native anchor behaviour is correct here.
-
-If `links` is empty or null: do not render the links section at all.
-
-### Save contact button
-
-Only rendered if `profile.show_save_contact === true`.
-
-A distinct button below the links — slightly different style to stand out:
-- Background: `emerald-500` or `emerald-600` — solid, not frosted
-- Text: white, "Save Contact"
-- Left icon: `Contact` or `UserPlus` (lucide-react)
-- Full width, `rounded-xl`, `py-3`
-
-This button triggers a `.vcf` file download. Since this is a Server Component, the save contact button must be a small `'use client'` component:
-
-**File:** `components/public/save-contact-button.js`
-
-On click, the client component calls `GET /api/vcard?userId={owner_id}` which returns a `.vcf` file as a download.
-
-**API route:** `app/api/vcard/route.js`
+## On submit
 
 ```js
-// GET /api/vcard?userId={userId}
-// Fetches the user's profile using service role client
-// Generates a .vcf string
-// Returns with headers:
-//   Content-Type: text/vcard
-//   Content-Disposition: attachment; filename="{name}.vcf"
+const { data, error } = await supabase.auth.verifyOtp({
+  token_hash: tokenHash,
+  type: 'invite',
+})
 ```
 
-vCard format to generate:
-```
-BEGIN:VCARD
-VERSION:3.0
-FN:{name}
-TITLE:{title}
-NOTE:{bio}
-URL:{first website link if exists}
-TEL:{phone link if exists}
-EMAIL:{email link if exists}
-END:VCARD
+If successful — a session is now active. Then immediately update their password:
+
+```js
+const { error: updateError } = await supabase.auth.updateUser({
+  password: newPassword
+})
 ```
 
-Only include fields that exist in the profile — omit null/empty lines.
+On full success:
+- Redirect to `/customer/profile` — no success message needed, the redirect is the feedback. They land in their fresh dashboard ready to build their profile.
 
-### Powered by Beem Hive footer
-
-At the very bottom of the page, below all content. Centered:
-
-- Small Beem Hive logo mark (a small `emerald-400` circle or icon)
-- "Powered by Beem Hive" in small muted text (white/40 on dark, gray-400 on light)
-- The whole footer is a link to `https://beemhive.com` — `target="_blank"`
+On error from `verifyOtp`:
+- If error message indicates expired token → render the **expired link state** (see below)
+- Any other error → show inline error above the submit button: "Something went wrong. Please request a new invite link from Beem Hive."
 
 ---
 
-## Inactive card page
+## States
 
-Rendered when `nfcItem.is_active === false` or profile is null.
+**Default** — form as described above
 
-Same background pattern (use the default gradient since there's no profile to read from). Centered content:
+**Loading** — button disabled + spinner, all inputs disabled, no double-submit
 
-- A large `CreditCard` icon — muted, `text-white/30`
-- "This card is not active" in medium white text
-- "This NFC card has been temporarily deactivated." in small muted white text
-- "Powered by Beem Hive" footer — same as active page
+**Invalid link state** — rendered when token is missing or type is wrong on page load:
+- `LinkOff` icon (lucide-react) in a soft `rose-100` circle, centered
+- Heading: "Invalid invite link"
+- Body: "This invite link is not valid. Please contact Beem Hive to receive a new one."
+- No form, no button
 
-No other content, no links, no way to navigate anywhere.
+**Expired link state** — rendered when `verifyOtp` returns an expired token error:
+- `Clock` icon in a soft `amber-100` circle, centered
+- Heading: "This link has expired"
+- Body: "Invite links expire after 48 hours. Please contact Beem Hive to receive a new invite."
+- No form, no button
 
----
-
-## Theme picker addition to profile builder
-
-Since customers can choose their background, add a **Section 5 — Profile theme** to the existing profile builder page (`app/(customer)/profile/page.js`) below the save contact toggle.
-
-This section should be added to the profile builder prompt's component — add it now alongside this build:
-
-**Section header:** "Profile theme" + muted description: "Choose the background for your public profile page"
-
-**Preset options:** A grid of clickable swatches (`grid grid-cols-4 gap-3`). Each swatch is a 56×56px rounded square showing the color or gradient. Clicking selects it — show a white checkmark overlay on the selected swatch.
-
-Presets to include (value is what gets stored in `profiles.background`):
-
-| Name | Value |
-|---|---|
-| Midnight | `linear-gradient(135deg, #0f172a, #1e293b)` |
-| Forest | `linear-gradient(135deg, #052e16, #14532d)` |
-| Ocean | `linear-gradient(135deg, #0c4a6e, #0ea5e9)` |
-| Dusk | `linear-gradient(135deg, #2e1065, #4c1d95)` |
-| Sunset | `linear-gradient(135deg, #7c2d12, #c2410c)` |
-| Rose | `linear-gradient(135deg, #881337, #e11d48)` |
-| Slate | `linear-gradient(135deg, #1e293b, #475569)` |
-| Pure Black | `#000000` |
-
-Default selection if `profile.background` is null: Midnight.
-
-Theme changes are included in the manual save — not auto-saved. Include the `background` field in the save payload.
-
----
-
-## 404 page
-
-Create `app/t/[slug]/not-found.js` — a simple custom 404 for the `/t/` namespace:
-- Same dark gradient background as the inactive card page
-- Large `Search` icon, muted
-- "Profile not found"
-- "This link doesn't match any Beem Hive profile."
-- Powered by Beem Hive footer
+**Both invalid and expired states** should look calm and helpful — not alarming. The customer did nothing wrong.
 
 ---
 
@@ -270,43 +133,19 @@ Create `app/t/[slug]/not-found.js` — a simple custom 404 for the `/t/` namespa
 
 ```
 app/
-├── t/
-│   └── [slug]/
-│       ├── page.js              ← Server Component
-│       └── not-found.js         ← Custom 404
-└── api/
-    └── vcard/
-        └── route.js             ← vCard generator API route
-
-components/
-└── public/
-    ├── link-button.js           ← thin 'use client' for hover states if needed
-    └── save-contact-button.js   ← 'use client' — handles file download
-
-lib/
-└── utils.js                     ← add hashIp() here alongside formatRelativeTime()
-```
-
----
-
-## Environment variables to add
-
-```
-IP_HASH_SALT=your_random_string_here
+└── (auth)/
+    └── invite/
+        └── page.js    ← single self-contained file
 ```
 
 ---
 
 ## What NOT to do
 
-- Do not add `'use client'` to `page.js` — this must be a Server Component
-- Do not use the anon Supabase client on this page — anonymous visitors are blocked by RLS, always use the service role client
-- Do not log the tap event client-side — it fires server-side before HTML is rendered
-- Do not log tap events for inactive cards
-- Do not store raw IP addresses — always hash first using `hashIp()`
-- Do not use a raw `<img>` tag for the profile photo — use Next.js `<Image>`
-- Do not use an `<iframe>` anywhere on this page
-- Do not install a vCard generation library — build the `.vcf` string manually
-- Do not add any navigation, sidebar, or header chrome — this is a fully standalone page
-- Do not skip the deduplication check — same IP tapping the same card within 5 minutes must only count as one tap
-- Do not forget `rel="noopener noreferrer"` on all external links
+- Do not exchange the token on page load — only on form submit
+- Do not redirect to login after success — go directly to `/customer/profile`
+- Do not show a generic "success" screen before redirecting — just redirect immediately
+- Do not use `<form>` tags — use div + onClick handlers
+- Do not skip the password strength indicator — it's the customer's first impression of product quality
+- Do not show raw Supabase error messages — map to friendly strings
+- Do not allow submit if passwords don't match — validate client-side before any Supabase call

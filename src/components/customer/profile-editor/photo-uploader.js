@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
-import { createClient } from '../../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { useCustomerProfile } from '../customer-profile-context'
 
 export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userInitial }) {

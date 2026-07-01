@@ -2,8 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Copy, Check, Eye, Loader2 } from 'lucide-react'
+
+const THEME_PRESETS = [
+  { name: 'Midnight', value: 'linear-gradient(135deg, #0f172a, #1e293b)' },
+  { name: 'Forest',   value: 'linear-gradient(135deg, #052e16, #14532d)' },
+  { name: 'Ocean',    value: 'linear-gradient(135deg, #0c4a6e, #0ea5e9)' },
+  { name: 'Dusk',     value: 'linear-gradient(135deg, #2e1065, #4c1d95)' },
+  { name: 'Sunset',   value: 'linear-gradient(135deg, #7c2d12, #c2410c)' },
+  { name: 'Rose',     value: 'linear-gradient(135deg, #881337, #e11d48)' },
+  { name: 'Slate',    value: 'linear-gradient(135deg, #1e293b, #475569)' },
+  { name: 'Pure Black', value: '#000000' },
+]
 import { toast } from 'sonner'
-import { createClient } from '../../../../../lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { useCustomerProfile } from '@/components/customer/customer-profile-context'
 import { Separator } from '@/components/ui/separator'
 import PhotoUploader from '@/components/customer/profile-editor/photo-uploader'
@@ -62,6 +73,7 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('')
   const [links, setLinks] = useState([])
   const [showSaveContact, setShowSaveContact] = useState(true)
+  const [background, setBackground] = useState(null)
   const [photoUrl, setPhotoUrl] = useState(null)
 
   const [isDirty, setIsDirty] = useState(false)
@@ -85,7 +97,7 @@ export default function ProfilePage() {
 
       const [profileRes, itemRes] = await Promise.all([
         supabase.from('profiles')
-          .select('name, title, bio, links, show_save_contact, photo_url')
+          .select('name, title, bio, links, show_save_contact, photo_url, background')
           .eq('user_id', uid)
           .maybeSingle(),
         supabase.from('nfc_items')
@@ -102,6 +114,7 @@ export default function ProfilePage() {
         setBio(p.bio ?? '')
         setLinks(Array.isArray(p.links) ? p.links : [])
         setShowSaveContact(p.show_save_contact ?? true)
+        setBackground(p.background ?? null)
         setPhotoUrl(p.photo_url ?? null)
       }
 
@@ -169,6 +182,7 @@ export default function ProfilePage() {
       bio,
       links,
       show_save_contact: overrides.showSaveContactOverride ?? showSaveContact,
+      background,
     }
 
     const { error } = await supabase.from('profiles').upsert(payload)
@@ -205,6 +219,7 @@ export default function ProfilePage() {
     bio,
     links,
     showSaveContact,
+    background,
     photoUrl,
     userInitial,
   }
@@ -306,6 +321,36 @@ export default function ProfilePage() {
               onChange={handleSaveContactToggle}
               disabled={isSaving}
             />
+          </Section>
+
+          <Section title="Profile theme">
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
+              Choose the background for your public profile page
+            </p>
+            <div className="grid grid-cols-4 gap-3">
+              {THEME_PRESETS.map(preset => {
+                const isSelected = (background ?? THEME_PRESETS[0].value) === preset.value
+                return (
+                  <button
+                    key={preset.name}
+                    title={preset.name}
+                    onClick={() => { setBackground(preset.value); markDirty() }}
+                    className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 transition-all"
+                    style={{
+                      background: preset.value,
+                      ringColor: isSelected ? 'rgb(16,185,129)' : 'transparent',
+                      outline: isSelected ? '2px solid rgb(16,185,129)' : '2px solid transparent',
+                    }}
+                  >
+                    {isSelected && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <Check size={18} className="text-white drop-shadow" />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </Section>
         </div>
 
