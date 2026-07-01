@@ -5,19 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Eye, EyeOff, UserCheck, LinkOff, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-function getPasswordStrength(password) {
-  if (password.length < 8) return { label: 'Too short', color: 'bg-rose-400', width: '25%' }
-  const types = [
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /[0-9]/.test(password),
-    /[^A-Za-z0-9]/.test(password),
-  ].filter(Boolean).length
-  if (password.length >= 10 && types >= 3) return { label: 'Strong', color: 'bg-emerald-500', width: '100%' }
-  if (types >= 2) return { label: 'Good', color: 'bg-blue-400', width: '75%' }
-  return { label: 'Weak', color: 'bg-amber-400', width: '50%' }
-}
+import PasswordStrength from '@/components/shared/password-strength'
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400'
 
@@ -69,7 +57,6 @@ export default function InvitePage() {
     setTokenState('ready')
   }, [])
 
-  const strength = getPasswordStrength(password)
   const passwordError = passwordTouched && password.length < 8 ? 'Password must be at least 8 characters.' : null
   const confirmError = confirmTouched && confirm !== password ? "Passwords don't match" : null
 
@@ -174,19 +161,7 @@ export default function InvitePage() {
                 </div>
               </div>
               {passwordError && <p className="mt-1 text-xs text-rose-600">{passwordError}</p>}
-
-              {/* Strength bar */}
-              {password.length > 0 && (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 ${strength.color}`}
-                      style={{ width: strength.width }}
-                    />
-                  </div>
-                  <span className="text-xs text-gray-500 w-14 text-right shrink-0">{strength.label}</span>
-                </div>
-              )}
+              <PasswordStrength password={password} />
             </div>
 
             {/* Confirm password */}
