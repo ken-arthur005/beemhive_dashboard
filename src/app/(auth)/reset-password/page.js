@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Eye, EyeOff, LockKeyhole, ShieldCheck, Clock, LinkOff } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, ShieldCheck, Clock, Link2Off } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PasswordStrength from '@/components/shared/password-strength'
 
