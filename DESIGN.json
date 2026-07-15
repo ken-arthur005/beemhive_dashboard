@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-14T00:00:00Z",
+  "title": "Design System: Beem Hive",
+  "extensions": {
+    "colorMeta": {
+      "amber-signal": {
+        "role": "primary",
+        "displayName": "Amber Signal",
+        "canonical": "oklch(0.76 0.167 70)",
+        "tonalRamp": ["oklch(0.20 0.06 70)", "oklch(0.30 0.09 70)", "oklch(0.40 0.11 70)", "oklch(0.52 0.14 70)", "oklch(0.62 0.16 70)", "oklch(0.76 0.167 70)", "oklch(0.86 0.12 78)", "oklch(0.95 0.06 85)"]
+      },
+      "amber-deep": {
+        "role": "primary",
+        "displayName": "Amber Deep",
+        "canonical": "oklch(0.67 0.157 68)",
+        "tonalRamp": ["oklch(0.18 0.05 68)", "oklch(0.28 0.08 68)", "oklch(0.38 0.10 68)", "oklch(0.50 0.13 68)", "oklch(0.60 0.15 68)", "oklch(0.67 0.157 68)", "oklch(0.78 0.11 74)", "oklch(0.92 0.05 82)"]
+      },
+      "amber-glow": {
+        "role": "primary",
+        "displayName": "Amber Glow",
+        "canonical": "oklch(0.83 0.157 76)",
+        "tonalRamp": ["oklch(0.22 0.06 76)", "oklch(0.33 0.09 76)", "oklch(0.44 0.11 76)", "oklch(0.56 0.14 76)", "oklch(0.68 0.15 76)", "oklch(0.76 0.157 74)", "oklch(0.83 0.157 76)", "oklch(0.95 0.06 88)"]
+      },
+      "amber-muted": {
+        "role": "secondary",
+        "displayName": "Amber Muted",
+        "canonical": "oklch(0.96 0.05 91)",
+        "tonalRamp": ["oklch(0.25 0.02 91)", "oklch(0.38 0.03 91)", "oklch(0.52 0.04 91)", "oklch(0.66 0.05 91)", "oklch(0.78 0.05 91)", "oklch(0.88 0.05 91)", "oklch(0.93 0.05 91)", "oklch(0.96 0.05 91)"]
+      },
+      "charcoal": {
+        "role": "neutral",
+        "displayName": "Charcoal",
+        "canonical": "oklch(0.19 0.01 264)",
+        "tonalRamp": ["oklch(0.10 0.005 264)", "oklch(0.19 0.01 264)", "oklch(0.28 0.012 264)", "oklch(0.40 0.012 264)", "oklch(0.52 0.011 264)", "oklch(0.65 0.009 264)", "oklch(0.80 0.006 264)", "oklch(0.95 0.003 264)"]
+      },
+      "charcoal-mid": {
+        "role": "neutral",
+        "displayName": "Charcoal Mid",
+        "canonical": "oklch(0.33 0.015 264)",
+        "tonalRamp": ["oklch(0.12 0.006 264)", "oklch(0.22 0.010 264)", "oklch(0.33 0.015 264)", "oklch(0.45 0.013 264)", "oklch(0.57 0.011 264)", "oklch(0.69 0.009 264)", "oklch(0.82 0.005 264)", "oklch(0.95 0.003 264)"]
+      },
+      "charcoal-soft": {
+        "role": "neutral",
+        "displayName": "Charcoal Soft",
+        "canonical": "oklch(0.52 0.011 264)",
+        "tonalRamp": ["oklch(0.15 0.005 264)", "oklch(0.25 0.008 264)", "oklch(0.36 0.010 264)", "oklch(0.46 0.011 264)", "oklch(0.52 0.011 264)", "oklch(0.65 0.009 264)", "oklch(0.80 0.006 264)", "oklch(0.95 0.003 264)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "oklch(0.98 0 0)",
+        "tonalRamp": ["oklch(0.10 0 0)", "oklch(0.22 0 0)", "oklch(0.38 0 0)", "oklch(0.54 0 0)", "oklch(0.70 0 0)", "oklch(0.84 0 0)", "oklch(0.93 0 0)", "oklch(0.98 0 0)"]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Error Rose",
+        "canonical": "oklch(0.57 0.22 8)",
+        "tonalRamp": ["oklch(0.20 0.08 8)", "oklch(0.30 0.12 8)", "oklch(0.40 0.16 8)", "oklch(0.50 0.20 8)", "oklch(0.57 0.22 8)", "oklch(0.68 0.18 10)", "oklch(0.82 0.10 14)", "oklch(0.96 0.04 20)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page-level headers on the public profile page only. Not used in admin or customer dashboards." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles, dialog headers, sidebar page name." },
+      "title": { "displayName": "Title", "purpose": "Card titles, form section headers, table column group labels." },
+      "body": { "displayName": "Body", "purpose": "All prose, table cells, input text, descriptions. Max 65-75ch line length." },
+      "label": { "displayName": "Label", "purpose": "Form labels, table headers, badge text, stat card labels." },
+      "mono": { "displayName": "Mono", "purpose": "NFC slugs, URLs, copy-button targets, code snippets. Signals machine-readable value." }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 4px 24px rgba(0,0,0,0.08)",
+        "purpose": "Modals, dialogs, dropdown menus, tooltips. Floating elements only."
+      },
+      {
+        "name": "float-strong",
+        "value": "0 8px 40px rgba(0,0,0,0.14)",
+        "purpose": "Full-screen modals and sheets on dark/gradient backgrounds (public profile page)."
+      }
+    ],
+    "motion": [
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Default easing for all state transitions." },
+      { "name": "duration-fast", "value": "150ms", "purpose": "Color/opacity transitions (button hover, badge state)." },
+      { "name": "duration-standard", "value": "200ms", "purpose": "Sidebar collapse, panel slide, dropdown open." },
+      { "name": "duration-deliberate", "value": "300ms", "purpose": "Modal entrance, sheet slide-up." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action. Amber Signal background, Charcoal text. Used for the most important action on any given screen.",
+      "html": "<button class=\"ds-btn-primary\">Create NFC Item</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #f59e0b; color: #111827; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.25, 1, 0.5, 1); outline: none; } .ds-btn-primary:hover { background: #d97706; } .ds-btn-primary:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; } .ds-btn-primary:active { background: #b45309; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Transparent, border on hover. Does not compete with the primary button.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: transparent; color: #374151; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1; padding: 10px 20px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: border-color 150ms cubic-bezier(0.25, 1, 0.5, 1), background 150ms cubic-bezier(0.25, 1, 0.5, 1); outline: none; } .ds-btn-ghost:hover { border-color: #e5e7eb; background: #f3f4f6; } .ds-btn-ghost:focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; } .ds-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Irreversible actions: delete, revoke. Rose background, white text. Used only when the action cannot be undone.",
+      "html": "<button class=\"ds-btn-destructive\">Delete Item</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #e11d48; color: #ffffff; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; transition: background 150ms cubic-bezier(0.25, 1, 0.5, 1); outline: none; } .ds-btn-destructive:hover { background: #be123c; } .ds-btn-destructive:focus-visible { outline: 2px solid #e11d48; outline-offset: 2px; } .ds-btn-destructive:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard form input. Flat with subtle border; amber focus ring signals activation without shouting.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-input-demo\">Card Slug</label><input class=\"ds-input\" id=\"ds-input-demo\" type=\"text\" placeholder=\"e.g. jane-smith\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; } .ds-label { font-family: Geist, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; color: #374151; letter-spacing: 0.01em; } .ds-input { background: #ffffff; color: #111827; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 400; line-height: 1.5; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 10px; width: 100%; outline: none; transition: border-color 150ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-input::placeholder { color: #9ca3af; } .ds-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18); } .ds-input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }"
+    },
+    {
+      "name": "Content Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Standard document-flow card. Distinguished from the page background by a tonal step, not a shadow.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">NFC Items</p><p class=\"ds-card-body\">Manage your physical NFC cards, stands, and tags.</p></div>",
+      "css": ".ds-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; } .ds-card-title { font-family: Geist, system-ui, sans-serif; font-size: 0.9375rem; font-weight: 600; color: #111827; margin: 0 0 6px 0; } .ds-card-body { font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 400; color: #6b7280; line-height: 1.6; margin: 0; }"
+    },
+    {
+      "name": "Active Nav Item",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Sidebar navigation in active state. Amber Signal background on Charcoal sidebar. The only place amber appears in bulk.",
+      "html": "<nav class=\"ds-sidebar\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\"/><line x1=\"8\" y1=\"21\" x2=\"16\" y2=\"21\"/><line x1=\"12\" y1=\"17\" x2=\"12\" y2=\"21\"/></svg>NFC Items</a><a class=\"ds-nav-item\" href=\"#\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>Customers</a></nav>",
+      "css": ".ds-sidebar { background: #111827; padding: 8px; display: flex; flex-direction: column; gap: 2px; border-radius: 8px; width: 200px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-family: Geist, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #9ca3af; text-decoration: none; transition: background 150ms cubic-bezier(0.25, 1, 0.5, 1), color 150ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-nav-item:hover { background: rgba(255,255,255,0.08); color: #f3f4f6; } .ds-nav-active { background: #f59e0b; color: #111827; } .ds-nav-active:hover { background: #d97706; color: #111827; } .ds-nav-icon { width: 16px; height: 16px; flex-shrink: 0; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "description": "Inline status indicator for NFC item active/inactive state.",
+      "html": "<span class=\"ds-badge ds-badge-active\">Active</span><span class=\"ds-badge ds-badge-inactive\">Inactive</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-family: Geist, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.01em; line-height: 1.5; } .ds-badge-active { background: #fef3c7; color: #d97706; } .ds-badge-inactive { background: #fff1f2; color: #be123c; }"
+    },
+    {
+      "name": "NFC URL Display",
+      "kind": "custom",
+      "description": "The primary deliverable after card creation. Slug URL in Geist Mono with one-click copy. The most important element on the card creation screen.",
+      "html": "<div class=\"ds-nfc-url\"><span class=\"ds-nfc-label\">NFC URL</span><div class=\"ds-nfc-row\"><code class=\"ds-nfc-code\">https://beemhive.com/t/jane-smith</code><button class=\"ds-nfc-copy\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\"/><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"/></svg>Copy</button></div></div>",
+      "css": ".ds-nfc-url { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; } .ds-nfc-label { font-family: Geist, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.01em; text-transform: uppercase; } .ds-nfc-row { display: flex; align-items: center; gap: 12px; } .ds-nfc-code { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.8125rem; color: #111827; background: none; border: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-nfc-copy { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; font-family: Geist, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; color: #374151; cursor: pointer; transition: background 150ms cubic-bezier(0.25, 1, 0.5, 1), border-color 150ms cubic-bezier(0.25, 1, 0.5, 1); flex-shrink: 0; } .ds-nfc-copy svg { width: 14px; height: 14px; } .ds-nfc-copy:hover { background: #f9fafb; border-color: #d1d5db; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Field Operator",
+    "overview": "Beem Hive is a tool for people who move. The admin processes orders and manages customers without ceremony. The customer builds a profile they hand out at conferences, client meetings, first introductions. The interface should operate with the same quiet confidence as the physical card itself: professional, immediate, no friction.\n\nThe palette comes directly from the logo: amber, charcoal, white. Three values. No additional hues are introduced unless a function demands it (red for errors, a secondary tonal difference for data viz). Amber carries intentional weight: it is the bee's color, the Hive in the wordmark, and the reason someone reaches for this product over a plain QR sticker. When amber appears on screen, it means something is primary, active, or worth attention. This is not decoration; it is signal.\n\nThe system rejects the interchangeable SaaS dashboard aesthetic (blue primary, identical stat cards, no personality), the link-in-bio kitsch of Linktree and its clones, the density and grey monotony of enterprise software, and the gratuitous gradient-and-blob exuberance of startup-y tools. The visual language is restrained, not colorless; professional, not corporate; confident, not loud.",
+    "keyCharacteristics": [
+      "Three-color brand identity: amber, charcoal, white. Errors use rose. No other hues.",
+      "Flat tonal layering for depth. No decorative shadows.",
+      "Single typeface (Geist) with hierarchy through weight and scale contrast only.",
+      "Amber reserved for primary actions and live/active states. Its rarity is the point.",
+      "The public /t/[slug] profile page is the product's face to the world; it should feel elevated, not like a free bio link."
+    ],
+    "rules": [
+      { "name": "The Three-Color Rule", "body": "Brand amber, charcoal, and white account for all intentional color. Rose is functional (errors). Blue and purple appear only in product-type badges as the smallest possible scoped exception. No new hues enter the system without deliberate justification.", "section": "colors" },
+      { "name": "The Signal Rule", "body": "Amber Signal appears on 10% or less of any given screen in the admin and customer dashboards. Its presence means: this is the primary action or the live state. Diluting it by using it everywhere makes it mean nothing.", "section": "colors" },
+      { "name": "The Weight-Contrast Rule", "body": "Adjacent typographic elements must differ by at least one full weight step. A flat scale where everything is 400 medium-gray is a symptom of not trusting hierarchy. Contrast is what lets the eye navigate.", "section": "typography" },
+      { "name": "The Mono Signal Rule", "body": "Monospace text means 'this is a machine-readable value': a slug, a URL to copy, a code snippet. Never use Geist Mono for decoration or to make something look technical.", "section": "typography" },
+      { "name": "The Flat-First Rule", "body": "If it sits in the document flow, it is flat. Shadows are not decoration; they are a statement about position in the z-axis. Reserve them for things that are literally above.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Amber Signal (#f59e0b) for primary buttons, active nav items, and the login brand panel. Nothing else.",
+      "Do express depth through tonal layering (Surface Sunken to Surface to Surface Raised). Three steps is enough.",
+      "Do lead with Charcoal text on white and white text on Charcoal. These are the two readable combinations at any size.",
+      "Do render slugs, NFC URLs, and any machine-readable value in Geist Mono. The typeface signals 'copy this.'",
+      "Do give the public /t/[slug] profile page its own elevated visual register. It is not the dashboard; it is the product.",
+      "Do maintain weight contrast of at least one full step between adjacent typographic elements.",
+      "Do size the NFC URL display as though it is the most important thing on the card-creation screen, because it is."
+    ],
+    "donts": [
+      "Don't use a blue primary color. The generic SaaS dashboard look (blue primary, identical stat cards, no visual personality) is the primary anti-reference for this product.",
+      "Don't make the public profile look like a Linktree clone: no gradient blobs, no pastel bubbles, no stacked rounded boxes with emoji icons.",
+      "Don't build dense, grey, row-heavy admin tables without visual hierarchy. Every screen should have a clear focal point.",
+      "Don't use gradients, blob shapes, or emoji-heavy copy in the dashboard. This is a professional tool, not a startup landing page.",
+      "Don't use border-left or border-right greater than 1px as a colored accent stripe.",
+      "Don't use gradient text (background-clip: text). Single solid color only; emphasis through weight or size.",
+      "Don't add a second accent color because the interface feels flat. Fix the weight and scale, not the palette.",
+      "Don't introduce new hues for decorative purposes. The Three-Color Rule holds.",
+      "Don't shadow document-flow cards. The flat surface is a feature."
+    ]
+  }
+}

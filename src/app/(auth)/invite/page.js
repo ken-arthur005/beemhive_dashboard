@@ -7,7 +7,7 @@ import { Eye, EyeOff, UserCheck, Link2Off, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PasswordStrength from '@/components/shared/password-strength'
 
-const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400'
+const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400'
 
 function StatusCard({ icon, iconBg, heading, body }) {
   return (
@@ -100,7 +100,7 @@ export default function InvitePage() {
   const formPanel = (
     <div className="flex flex-1 items-center justify-center bg-white px-6 py-12">
       {tokenState === 'checking' && (
-        <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
       )}
 
       {tokenState === 'invalid' && (
@@ -131,8 +131,8 @@ export default function InvitePage() {
 
           {/* Welcome icon */}
           <div className="flex justify-center mb-5">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100">
-              <UserCheck size={32} className="text-emerald-600" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100">
+              <UserCheck size={32} className="text-amber-600" />
             </div>
           </div>
 
@@ -195,10 +195,10 @@ export default function InvitePage() {
             {/* Submit */}
             <div
               onClick={submitting ? undefined : handleSubmit}
-              className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors cursor-pointer select-none
+              className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 transition-colors cursor-pointer select-none
                 ${submitting
-                  ? 'bg-emerald-400 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+                  ? 'bg-amber-300 cursor-not-allowed'
+                  : 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700'
                 }`}
             >
               {submitting && (

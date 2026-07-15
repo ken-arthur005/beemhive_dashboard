@@ -7,7 +7,7 @@ import { Eye, EyeOff, LockKeyhole, ShieldCheck, Clock, Link2Off } from 'lucide-r
 import { createClient } from '@/lib/supabase/client'
 import PasswordStrength from '@/components/shared/password-strength'
 
-const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400'
+const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400'
 
 function StatusCard({ iconBg, icon, heading, body, action }) {
   return (
@@ -134,8 +134,8 @@ function ResetPasswordForm() {
   if (view === 'success') {
     return (
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100">
-          <ShieldCheck size={24} className="text-emerald-600" />
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-100">
+          <ShieldCheck size={24} className="text-amber-600" />
         </div>
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Password updated</h2>
@@ -146,7 +146,7 @@ function ResetPasswordForm() {
         {/* Progress bar */}
         <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full"
+            className="h-full bg-amber-500 rounded-full"
             style={{
               animation: 'progress-fill 2.5s linear forwards',
             }}
@@ -160,7 +160,7 @@ function ResetPasswordForm() {
         `}</style>
         <a
           href="/login"
-          className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline"
+          className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
         >
           Go to login now
         </a>
@@ -178,8 +178,8 @@ function ResetPasswordForm() {
       </div>
 
       <div className="flex justify-center mb-5">
-        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100">
-          <LockKeyhole size={24} className="text-emerald-600" />
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-100">
+          <LockKeyhole size={24} className="text-amber-600" />
         </div>
       </div>
 
@@ -247,10 +247,10 @@ function ResetPasswordForm() {
 
         <div
           onClick={handleSubmit}
-          className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors cursor-pointer select-none
+          className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 transition-colors cursor-pointer select-none
             ${submitting
-              ? 'bg-emerald-400 cursor-not-allowed'
-              : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+              ? 'bg-amber-300 cursor-not-allowed'
+              : 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700'
             }`}
         >
           {submitting && (
@@ -284,7 +284,7 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-sm">
           <Suspense fallback={
             <div className="flex justify-center">
-              <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
             </div>
           }>
             <ResetPasswordForm />

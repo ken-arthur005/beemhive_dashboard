@@ -26,7 +26,7 @@ export default function CustomerHeader({ onOpenMobile, userEmail }) {
       className="w-7 h-7 rounded-full object-cover cursor-pointer"
     />
   ) : (
-    <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-medium cursor-pointer">
+    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium cursor-pointer">
       {profile.name ? profile.name[0].toUpperCase() : (userEmail ? userEmail[0].toUpperCase() : '?')}
     </div>
   )

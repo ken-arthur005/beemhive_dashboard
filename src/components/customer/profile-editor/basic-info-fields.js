@@ -1,7 +1,7 @@
 'use client'
 
 const inputBase = 'w-full rounded-lg border bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-colors'
-const inputNormal = `${inputBase} border-gray-300 dark:border-gray-700 focus:ring-emerald-500`
+const inputNormal = `${inputBase} border-gray-300 dark:border-gray-700 focus:ring-amber-400`
 const inputError = `${inputBase} border-rose-500 focus:ring-rose-500`
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
 

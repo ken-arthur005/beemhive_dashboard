@@ -165,7 +165,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
     setTimeout(() => setUrlCopied(false), 1500)
   }
 
-  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
   const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
   const errorClass = 'mt-1 text-xs text-rose-500'
 
@@ -174,24 +174,8 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
       <DialogContent className="max-w-md" showCloseButton={step === 'form'}>
         {step === 'success' ? (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/20">
-              <style>{`
-                @keyframes checkmark {
-                  0% { height: 0; width: 0; opacity: 0; }
-                  40% { height: 60%; width: 0; opacity: 1; }
-                  100% { height: 60%; width: 30%; opacity: 1; }
-                }
-                .checkmark-line {
-                  display: block;
-                  width: 30%;
-                  height: 60%;
-                  border-bottom: 2.5px solid #059669;
-                  border-right: 2.5px solid #059669;
-                  transform: rotate(45deg) translate(-20%, -30%);
-                  animation: checkmark 0.4s ease-out forwards;
-                }
-              `}</style>
-              <span className="checkmark-line" />
+            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-900/20">
+              <Check size={28} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
             </div>
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Item created successfully</h3>
@@ -206,7 +190,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
                   onClick={copyUrl}
                   className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
-                  {urlCopied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  {urlCopied ? <Check size={14} className="text-amber-600" /> : <Copy size={14} />}
                 </button>
               </div>
             </div>
@@ -295,7 +279,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
               <div>
                 <label className={labelClass}>Profile URL slug</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex flex-1 items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent">
+                  <div className="flex flex-1 items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-amber-400 focus-within:border-transparent">
                     <span className="pl-3 text-sm text-gray-400 dark:text-gray-500 shrink-0 select-none">beemhive.com/t/</span>
                     <input
                       type="text"
@@ -335,12 +319,14 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
               )}
 
               {/* Submit */}
-              <div
-                onClick={submitting ? undefined : handleSubmit}
-                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors cursor-pointer select-none
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors
                   ${submitting
-                    ? 'bg-emerald-400 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+                    ? 'bg-amber-300 text-gray-900 cursor-not-allowed'
+                    : 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-900'
                   }`}
               >
                 {submitting && (
@@ -350,7 +336,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
                   </svg>
                 )}
                 {submitting ? 'Creating…' : 'Create NFC Item'}
-              </div>
+              </button>
             </div>
           </>
         )}

@@ -102,7 +102,7 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
             className="w-full h-full rounded-full object-cover"
           />
         ) : (
-          <div className="w-full h-full rounded-full bg-emerald-600 flex items-center justify-center text-white text-4xl font-semibold">
+          <div className="w-full h-full rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-4xl font-semibold">
             {userInitial ?? '?'}
           </div>
         )}

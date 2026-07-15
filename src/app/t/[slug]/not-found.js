@@ -20,7 +20,7 @@ export default function NotFound() {
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs text-white/40"
         >
-          <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
           Powered by Beem Hive
         </a>
       </div>

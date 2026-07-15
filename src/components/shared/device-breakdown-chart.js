@@ -18,7 +18,7 @@ export default function DeviceBreakdownChart({ mobile, desktop, loading, isDark 
     { name: 'Mobile', value: mobile },
     { name: 'Desktop', value: desktop },
   ]
-  const colors = ['#10b981', isDark ? '#064e3b' : '#d1fae5']
+  const colors = ['#f59e0b', isDark ? '#451a03' : '#fef3c7']
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">

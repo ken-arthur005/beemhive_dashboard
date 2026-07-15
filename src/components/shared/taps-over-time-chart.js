@@ -5,7 +5,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 
-const PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#f43f5e']
+const PALETTE = ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#f43f5e']
 
 function formatXDate(dateStr) {
   const [, m, d] = dateStr.split('-')

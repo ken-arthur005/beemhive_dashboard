@@ -314,7 +314,7 @@ export default function CustomerAnalyticsPage() {
               onClick={copyProfileUrl}
               className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-mono text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              {copiedUrl ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+              {copiedUrl ? <Check size={12} className="text-amber-600" /> : <Copy size={12} />}
               {firstCardUrl}
             </button>
           )}
@@ -383,7 +383,7 @@ function PageHeader({ range, setRange, cards, selectedCard, setSelectedCard }) {
               onClick={() => setRange(opt.label)}
               className={`px-3 py-1.5 text-xs font-medium transition-colors
                 ${range === opt.label
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-amber-500 text-gray-900'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
             >

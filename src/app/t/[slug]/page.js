@@ -64,7 +64,7 @@ function BeemHiveFooter({ subtleClass }) {
         rel="noopener noreferrer"
         className={`flex items-center gap-2 text-xs ${subtleClass}`}
       >
-        <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+        <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
         Powered by Beem Hive
       </a>
     </div>
@@ -105,7 +105,7 @@ function ActiveProfile({ profile, ownerId }) {
                 priority
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-emerald-600 flex items-center justify-center text-white text-3xl font-bold">
+              <div className="w-24 h-24 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-3xl font-bold">
                 {initial}
               </div>
             )}

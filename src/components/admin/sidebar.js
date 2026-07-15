@@ -1,11 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { CreditCard, Users, BarChart2, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Separator } from '@/components/ui/separator'
 
 const NAV_ITEMS = [
   { label: 'NFC Items', icon: CreditCard, href: '/admin/nfc-items' },
@@ -20,7 +20,7 @@ function NavItem({ item, isCollapsed, onClick }) {
 
   const linkClass = `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
     ${isActive
-      ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+      ? 'bg-amber-500 text-gray-900 dark:bg-amber-400 dark:text-gray-900'
       : 'text-gray-100 dark:text-gray-300 hover:bg-gray-800'
     }
     ${isCollapsed ? 'justify-center px-2' : ''}
@@ -61,19 +61,42 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
   const userInitial = userEmail ? userEmail[0].toUpperCase() : '?'
 
   const avatarEl = (
-    <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-medium shrink-0">
+    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium shrink-0">
       {userInitial}
     </div>
   )
 
   const sidebarContent = (
     <div className={`flex flex-col h-full bg-gray-900 dark:bg-gray-950 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
-      {/* Logo */}
+      {/* Logo + collapse toggle */}
       <div className={`flex items-center gap-3 px-3 py-4 border-b border-gray-800 ${isCollapsed ? 'justify-center' : ''}`}>
-        {/* TODO: replace with actual logo */}
-        <div className="w-6 h-6 rounded-sm bg-emerald-600 shrink-0" />
+        <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
         {!isCollapsed && (
-          <span className="text-gray-100 font-semibold text-sm">Beem Hive</span>
+          <>
+            <span className="text-gray-100 font-semibold text-sm flex-1">Beem Hive</span>
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </>
+        )}
+        {isCollapsed && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={onToggleCollapse}
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                />
+              }
+            >
+              <ChevronRight size={16} />
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -89,10 +112,8 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
         ))}
       </nav>
 
-      <Separator className="bg-gray-800" />
-
-      {/* User info */}
-      <div className={`flex items-center gap-3 px-3 py-3 ${isCollapsed ? 'justify-center' : ''}`}>
+      {/* User info + sign out */}
+      <div className={`flex items-center gap-2 px-3 py-3 border-t border-gray-800 ${isCollapsed ? 'flex-col justify-center' : ''}`}>
         {isCollapsed ? (
           <Tooltip>
             <TooltipTrigger render={<div className="cursor-default" />}>
@@ -103,65 +124,38 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
         ) : (
           <>
             {avatarEl}
-            <span className="text-gray-300 text-xs truncate" title={userEmail}>
+            <span className="text-gray-300 text-xs truncate flex-1 min-w-0" title={userEmail}>
               {userEmail}
             </span>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    onClick={handleSignOut}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors shrink-0"
+                  />
+                }
+              >
+                <LogOut size={15} />
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign out</TooltipContent>
+            </Tooltip>
           </>
         )}
-      </div>
-
-      <Separator className="bg-gray-800" />
-
-      {/* Sign out */}
-      <div className="p-2">
-        {isCollapsed ? (
+        {isCollapsed && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
+                  className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
                 />
               }
             >
-              <LogOut size={18} />
+              <LogOut size={15} />
             </TooltipTrigger>
             <TooltipContent side="right">Sign out</TooltipContent>
           </Tooltip>
-        ) : (
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-          >
-            <LogOut size={18} className="shrink-0" />
-            <span>Sign out</span>
-          </button>
-        )}
-      </div>
-
-      {/* Collapse toggle */}
-      <div className="p-2 border-t border-gray-800">
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  onClick={onToggleCollapse}
-                  className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-                />
-              }
-            >
-              <ChevronRight size={18} />
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={onToggleCollapse}
-            className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-          >
-            <ChevronLeft size={18} />
-          </button>
         )}
       </div>
     </div>

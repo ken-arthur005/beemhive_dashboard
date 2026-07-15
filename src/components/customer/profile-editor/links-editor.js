@@ -83,7 +83,7 @@ export default function LinksEditor({ links, onChange, disabled }) {
           <button
             onClick={handleAdd}
             disabled={disabled}
-            className="flex items-center gap-1.5 rounded-lg border border-emerald-600 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed select-none"
+            className="flex items-center gap-1.5 rounded-lg border border-amber-500 px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed select-none"
           >
             <Plus size={14} />
             Add link

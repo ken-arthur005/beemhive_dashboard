@@ -175,7 +175,7 @@ export default function CustomersTable() {
               value={search}
               onChange={handleSearch}
               placeholder="Search customers…"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
             />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -281,7 +281,7 @@ export default function CustomersTable() {
                                 Invited
                               </Badge>
                             ) : (
-                              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-transparent">
+                              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-transparent">
                                 Active
                               </Badge>
                             )}
@@ -385,7 +385,7 @@ export default function CustomersTable() {
                                               <span className="capitalize">{item.product_type.replace('_', ' ')}</span>
                                               <span className="font-mono text-gray-400">— /t/{item.slug}</span>
                                               {copiedSlug === item.slug
-                                                ? <Check size={11} className="text-emerald-600" />
+                                                ? <Check size={11} className="text-amber-600" />
                                                 : <Copy size={11} className="text-gray-400" />
                                               }
                                             </button>
@@ -398,7 +398,7 @@ export default function CustomersTable() {
                                         <div className="mt-2">
                                           <button
                                             onClick={() => handleResendInvite(customer)}
-                                            className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline"
+                                            className="text-xs text-amber-600 hover:text-amber-700 hover:underline"
                                           >
                                             Resend invite
                                           </button>
@@ -426,7 +426,7 @@ export default function CustomersTable() {
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No customers match your search</p>
                     <button
                       onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterStatus('all') }}
-                      className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline"
+                      className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
                     >
                       Clear search
                     </button>

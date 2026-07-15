@@ -60,7 +60,7 @@ export default function TapsByHourChart({ data, loading, isDark }) {
             {data.map((entry) => (
               <Cell
                 key={entry.hour}
-                fill={entry.hour === currentHour ? '#34d399' : '#10b981'}
+                fill={entry.hour === currentHour ? '#fbbf24' : '#f59e0b'}
               />
             ))}
           </Bar>

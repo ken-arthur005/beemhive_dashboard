@@ -45,7 +45,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
 
         {/* Browser chrome */}
         <div className="h-9 bg-gray-100 border-b border-gray-200 flex items-center justify-center gap-1.5 shrink-0 px-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
           <span className="text-[11px] text-gray-500 truncate">
             beemhive.com/t/{slug ?? '...'}
           </span>
@@ -62,7 +62,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-emerald-600 flex items-center justify-center text-white text-2xl font-semibold">
+              <div className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-2xl font-semibold">
                 {userInitial ?? '?'}
               </div>
             )}
@@ -88,7 +88,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
 
           {/* Save contact */}
           {showSaveContact && (
-            <button className="w-full rounded-lg bg-emerald-600 text-white text-xs font-medium py-2.5 text-center">
+            <button className="w-full rounded-lg bg-amber-500 text-gray-900 text-xs font-medium py-2.5 text-center">
               Save Contact
             </button>
           )}

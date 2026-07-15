@@ -14,7 +14,7 @@ export default function SaveContactButton({ ownerId }) {
   return (
     <button
       onClick={handleDownload}
-      className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition-colors"
+      className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-gray-900 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 transition-colors"
     >
       <UserPlus size={16} />
       Save Contact

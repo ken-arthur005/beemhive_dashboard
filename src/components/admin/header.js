@@ -48,7 +48,7 @@ export default function Header({ onOpenMobile, userEmail }) {
         <Separator orientation="vertical" className="h-6 bg-gray-200 dark:bg-gray-700" />
 
         {/* Admin avatar — TODO: profile dropdown */}
-        <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-medium cursor-pointer">
+        <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium cursor-pointer">
           {userInitial}
         </div>
       </div>

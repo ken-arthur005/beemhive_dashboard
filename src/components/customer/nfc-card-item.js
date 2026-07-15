@@ -62,7 +62,7 @@ export default function NfcCardItem({ item }) {
         <Badge
           variant="outline"
           className={item.is_active
-            ? 'border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+            ? 'border-transparent bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
             : 'border-transparent bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
           }
         >
@@ -94,7 +94,7 @@ export default function NfcCardItem({ item }) {
             title="Copy URL"
           >
             {copiedUrl
-              ? <Check size={14} className="text-emerald-600" />
+              ? <Check size={14} className="text-amber-600" />
               : <Copy size={14} />
             }
           </button>
@@ -181,7 +181,7 @@ export default function NfcCardItem({ item }) {
                   title="Copy URL"
                 >
                   {copiedInstruction
-                    ? <Check size={13} className="text-emerald-600" />
+                    ? <Check size={13} className="text-amber-600" />
                     : <Copy size={13} />
                   }
                 </button>

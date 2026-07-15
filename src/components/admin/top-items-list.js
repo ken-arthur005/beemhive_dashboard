@@ -70,7 +70,7 @@ export default function TopItemsList({ items, loading }) {
                   {/* Progress bar */}
                   <div className="h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden mt-1">
                     <div
-                      className="h-full rounded-full bg-emerald-500"
+                      className="h-full rounded-full bg-amber-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

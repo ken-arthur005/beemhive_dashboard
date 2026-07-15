@@ -61,14 +61,14 @@ export default function ActivityFeed({ activity, loading, onRefresh }) {
                 {/* Icon */}
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0
                   ${isMobile
-                    ? 'bg-emerald-50 dark:bg-emerald-950/40'
+                    ? 'bg-amber-50 dark:bg-amber-950/40'
                     : 'bg-blue-50 dark:bg-blue-950/40'
                   }`}
                 >
                   <MousePointerClick
                     size={13}
                     className={isMobile
-                      ? 'text-emerald-600 dark:text-emerald-400'
+                      ? 'text-amber-600 dark:text-amber-400'
                       : 'text-blue-600 dark:text-blue-400'
                     }
                   />
@@ -93,7 +93,7 @@ export default function ActivityFeed({ activity, loading, onRefresh }) {
                     variant="outline"
                     className={`text-xs py-0 border-transparent ${
                       isMobile
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
                         : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
                     }`}
                   >

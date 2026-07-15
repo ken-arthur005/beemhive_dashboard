@@ -33,7 +33,7 @@ export default function PerCardBreakdown({ cards }) {
               </span>
               <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-emerald-500"
+                  className="h-full rounded-full bg-amber-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -43,7 +43,7 @@ export default function PerCardBreakdown({ cards }) {
               <Badge
                 variant="outline"
                 className={card.is_active
-                  ? 'border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs shrink-0'
+                  ? 'border-transparent bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs shrink-0'
                   : 'border-transparent bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-xs shrink-0'
                 }
               >

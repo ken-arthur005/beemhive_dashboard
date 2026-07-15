@@ -167,13 +167,14 @@ export default function NfcItemsTable() {
             Manage your NFC products and customer assignments
           </p>
         </div>
-        <div
+        <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 px-3 py-2 text-sm font-semibold text-white transition-colors cursor-pointer select-none shrink-0"
+          className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 active:bg-amber-700 px-3 py-2 text-sm font-semibold text-gray-900 transition-colors shrink-0"
         >
           <Plus size={16} />
           Create NFC Item
-        </div>
+        </button>
       </div>
 
       {/* Table card */}
@@ -186,7 +187,7 @@ export default function NfcItemsTable() {
               value={search}
               onChange={handleSearch}
               placeholder="Search by customer or slug…"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
             />
           </div>
           <Select value={filterType} onValueChange={setFilterType}>
@@ -264,7 +265,7 @@ export default function NfcItemsTable() {
                             title="Copy URL"
                           >
                             {copiedId === item.id
-                              ? <Check size={13} className="text-emerald-600" />
+                              ? <Check size={13} className="text-amber-600" />
                               : <Copy size={13} />
                             }
                           </button>
@@ -330,7 +331,7 @@ export default function NfcItemsTable() {
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No items match your search</p>
                     <button
                       onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterType('all'); setFilterStatus('all') }}
-                      className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline"
+                      className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
                     >
                       Clear filters
                     </button>
@@ -340,13 +341,14 @@ export default function NfcItemsTable() {
                     <span className="text-3xl">📇</span>
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No NFC items yet</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Create your first NFC item to get started</p>
-                    <div
+                    <button
+                      type="button"
                       onClick={() => setIsModalOpen(true)}
-                      className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-sm font-semibold text-white transition-colors cursor-pointer select-none"
+                      className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-2 text-sm font-semibold text-gray-900 transition-colors"
                     >
                       <Plus size={16} />
                       Create NFC Item
-                    </div>
+                    </button>
                   </>
                 )}
               </div>

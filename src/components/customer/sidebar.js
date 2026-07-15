@@ -1,11 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { UserCircle, CreditCard, BarChart2, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Separator } from '@/components/ui/separator'
 import { useCustomerProfile } from './customer-profile-context'
 
 const NAV_ITEMS = [
@@ -21,7 +21,7 @@ function NavItem({ item, isCollapsed, onClick }) {
 
   const linkClass = `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
     ${isActive
-      ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+      ? 'bg-amber-500 text-gray-900 dark:bg-amber-400 dark:text-gray-900'
       : 'text-gray-100 dark:text-gray-300 hover:bg-gray-800'
     }
     ${isCollapsed ? 'justify-center px-2' : ''}
@@ -66,7 +66,7 @@ function ProfileAvatar({ size = 'sm' }) {
 
   const initial = profile.name ? profile.name[0].toUpperCase() : '?'
   return (
-    <div className={`${dim} rounded-full bg-emerald-600 flex items-center justify-center text-white font-medium shrink-0`}>
+    <div className={`${dim} rounded-full bg-amber-500 flex items-center justify-center text-gray-900 font-medium shrink-0`}>
       {initial}
     </div>
   )
@@ -86,11 +86,35 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
 
   const sidebarContent = (
     <div className={`flex flex-col h-full bg-gray-900 dark:bg-gray-950 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
-      {/* Logo */}
+      {/* Logo + collapse toggle */}
       <div className={`flex items-center gap-3 px-3 py-4 border-b border-gray-800 ${isCollapsed ? 'justify-center' : ''}`}>
-        <div className="w-6 h-6 rounded-sm bg-emerald-600 shrink-0" />
+        <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
         {!isCollapsed && (
-          <span className="text-gray-100 font-semibold text-sm">Beem Hive</span>
+          <>
+            <span className="text-gray-100 font-semibold text-sm flex-1">Beem Hive</span>
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </>
+        )}
+        {isCollapsed && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={onToggleCollapse}
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                />
+              }
+            >
+              <ChevronRight size={16} />
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -106,21 +130,34 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
         ))}
       </nav>
 
-      <Separator className="bg-gray-800" />
-
-      {/* Identity section */}
-      <div className={`flex items-center gap-3 px-3 py-3 ${isCollapsed ? 'justify-center' : ''}`}>
+      {/* Identity + sign out */}
+      <div className={`flex items-center gap-2 px-3 py-3 border-t border-gray-800 ${isCollapsed ? 'justify-center flex-col gap-2' : ''}`}>
         {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger render={<div className="cursor-default" />}>
-              <ProfileAvatar />
-            </TooltipTrigger>
-            <TooltipContent side="right">{identityTooltipLabel}</TooltipContent>
-          </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger render={<div className="cursor-default" />}>
+                <ProfileAvatar />
+              </TooltipTrigger>
+              <TooltipContent side="right">{identityTooltipLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    onClick={handleSignOut}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                  />
+                }
+              >
+                <LogOut size={15} />
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign out</TooltipContent>
+            </Tooltip>
+          </>
         ) : (
           <>
             <ProfileAvatar />
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               {profile.name ? (
                 <span className="text-gray-100 text-xs font-medium truncate">{profile.name}</span>
               ) : (
@@ -128,62 +165,20 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
               )}
               <span className="text-gray-400 text-xs truncate" title={userEmail}>{userEmail}</span>
             </div>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    onClick={handleSignOut}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors shrink-0"
+                  />
+                }
+              >
+                <LogOut size={15} />
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign out</TooltipContent>
+            </Tooltip>
           </>
-        )}
-      </div>
-
-      <Separator className="bg-gray-800" />
-
-      {/* Sign out */}
-      <div className="p-2">
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-                />
-              }
-            >
-              <LogOut size={18} />
-            </TooltipTrigger>
-            <TooltipContent side="right">Sign out</TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-          >
-            <LogOut size={18} className="shrink-0" />
-            <span>Sign out</span>
-          </button>
-        )}
-      </div>
-
-      {/* Collapse toggle */}
-      <div className="p-2 border-t border-gray-800">
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  onClick={onToggleCollapse}
-                  className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-                />
-              }
-            >
-              <ChevronRight size={18} />
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={onToggleCollapse}
-            className="w-full flex justify-center items-center rounded-md px-2 py-2 text-gray-100 dark:text-gray-300 hover:bg-gray-800 transition-colors"
-          >
-            <ChevronLeft size={18} />
-          </button>
         )}
       </div>
     </div>

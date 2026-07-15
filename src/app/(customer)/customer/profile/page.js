@@ -48,7 +48,7 @@ function CopyButton({ url }) {
       title="Copy URL"
     >
       {copied
-        ? <Check size={14} className="text-emerald-600" />
+        ? <Check size={14} className="text-amber-600" />
         : <Copy size={14} />
       }
     </button>
@@ -231,7 +231,7 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -240,7 +240,7 @@ export default function ProfilePage() {
     <button
       onClick={() => handleSave(false)}
       disabled={isSaving || (!isDirty && !savedFlash)}
-      className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
     >
       {isSaving
         ? <><Spinner /> Saving…</>
@@ -284,7 +284,7 @@ export default function ProfilePage() {
       <div className="grid md:grid-cols-3 gap-6 md:gap-8">
         {/* Left: editor */}
         <div className="md:col-span-2 flex flex-col gap-5">
-          <Section>
+          <Section title="Basic info">
             <div className="flex justify-center">
               <PhotoUploader
                 userId={userId}
@@ -293,9 +293,6 @@ export default function ProfilePage() {
                 userInitial={userInitial}
               />
             </div>
-          </Section>
-
-          <Section title="Basic info">
             <BasicInfoFields
               name={name}
               title={title}
@@ -313,9 +310,6 @@ export default function ProfilePage() {
               onChange={handleLinksChange}
               disabled={isSaving}
             />
-          </Section>
-
-          <Section>
             <SaveContactToggle
               checked={showSaveContact}
               onChange={handleSaveContactToggle}
@@ -338,8 +332,8 @@ export default function ProfilePage() {
                     className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 transition-all"
                     style={{
                       background: preset.value,
-                      ringColor: isSelected ? 'rgb(16,185,129)' : 'transparent',
-                      outline: isSelected ? '2px solid rgb(16,185,129)' : '2px solid transparent',
+                      ringColor: isSelected ? '#f59e0b' : 'transparent',
+                      outline: isSelected ? '2px solid #f59e0b' : '2px solid transparent',
                     }}
                   >
                     {isSelected && (

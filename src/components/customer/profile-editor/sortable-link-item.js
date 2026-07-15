@@ -96,7 +96,7 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
           onFocus={() => setUrlError(null)}
           placeholder={currentType.placeholder}
           disabled={disabled}
-          className="flex-1 min-w-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+          className="flex-1 min-w-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50"
         />
 
         {/* Delete button */}
@@ -104,7 +104,7 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={handleConfirmDelete}
-              className="p-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              className="p-1 rounded text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title="Confirm delete"
             >
               <Check size={15} />

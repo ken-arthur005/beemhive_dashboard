@@ -258,7 +258,7 @@ function PageHeader({ range, setRange }) {
             onClick={() => setRange(opt.label)}
             className={`px-3 py-1.5 text-xs font-medium transition-colors
               ${range === opt.label
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-amber-500 text-gray-900'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
           >

@@ -55,7 +55,7 @@ export default function CustomerLayout({ children }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -76,7 +76,7 @@ export default function CustomerLayout({ children }) {
               onOpenMobile={() => setIsMobileOpen(true)}
               userEmail={userEmail}
             />
-            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-6 md:p-4">
+            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-4 md:p-6">
               {children}
             </main>
           </div>

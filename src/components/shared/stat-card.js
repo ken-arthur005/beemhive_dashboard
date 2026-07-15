@@ -21,8 +21,8 @@ export default function StatCard({ icon: Icon, value, label, trend, tooltip, loa
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col gap-2">
       {Icon && (
-        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-          <Icon size={16} className="text-emerald-600 dark:text-emerald-400" />
+        <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center">
+          <Icon size={16} className="text-amber-600 dark:text-amber-400" />
         </div>
       )}
       <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums leading-none mt-1">
