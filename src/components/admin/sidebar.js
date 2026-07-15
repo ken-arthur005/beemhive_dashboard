@@ -21,7 +21,7 @@ function NavItem({ item, isCollapsed, onClick }) {
   const linkClass = `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
     ${isActive
       ? 'bg-amber-500 text-gray-900 dark:bg-amber-400 dark:text-gray-900'
-      : 'text-gray-100 dark:text-gray-300 hover:bg-gray-800'
+      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
     }
     ${isCollapsed ? 'justify-center px-2' : ''}
   `
@@ -67,16 +67,16 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
   )
 
   const sidebarContent = (
-    <div className={`flex flex-col h-full bg-gray-900 dark:bg-gray-950 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center gap-3 px-3 py-4 border-b border-gray-800 ${isCollapsed ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-3 px-3 py-4 border-b border-gray-200 dark:border-gray-800 ${isCollapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
         {!isCollapsed && (
           <>
-            <span className="text-gray-100 font-semibold text-sm flex-1">Beem Hive</span>
+            <span className="text-gray-900 dark:text-gray-100 font-semibold text-sm flex-1">Beem Hive</span>
             <button
               onClick={onToggleCollapse}
-              className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+              className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Collapse sidebar"
             >
               <ChevronLeft size={16} />
@@ -89,7 +89,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
               render={
                 <button
                   onClick={onToggleCollapse}
-                  className="p-1 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                  className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 />
               }
             >
@@ -113,7 +113,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
       </nav>
 
       {/* User info + sign out */}
-      <div className={`flex items-center gap-2 px-3 py-3 border-t border-gray-800 ${isCollapsed ? 'flex-col justify-center' : ''}`}>
+      <div className={`flex items-center gap-2 px-3 py-3 border-t border-gray-200 dark:border-gray-800 ${isCollapsed ? 'flex-col justify-center' : ''}`}>
         {isCollapsed ? (
           <Tooltip>
             <TooltipTrigger render={<div className="cursor-default" />}>
@@ -124,7 +124,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
         ) : (
           <>
             {avatarEl}
-            <span className="text-gray-300 text-xs truncate flex-1 min-w-0" title={userEmail}>
+            <span className="text-gray-500 dark:text-gray-300 text-xs truncate flex-1 min-w-0" title={userEmail}>
               {userEmail}
             </span>
             <Tooltip>
@@ -132,7 +132,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
                 render={
                   <button
                     onClick={handleSignOut}
-                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors shrink-0"
+                    className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
                   />
                 }
               >
@@ -148,7 +148,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
               render={
                 <button
                   onClick={handleSignOut}
-                  className="p-1.5 rounded-md text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                  className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 />
               }
             >
