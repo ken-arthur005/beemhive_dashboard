@@ -106,13 +106,19 @@ export default function NfcItemsTable() {
 
   useEffect(() => { setPage(1) }, [debouncedSearch, filterType, filterStatus])
 
+  const togglingRef = useRef(new Set())
+
   function handleToggle(item) {
+    if (togglingRef.current.has(item.id)) return
+    togglingRef.current.add(item.id)
     const prev = items
-    setItems(items.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i))
-    supabase.from('nfc_items').update({ is_active: !item.is_active }).eq('id', item.id)
+    const nextActive = !item.is_active
+    setItems(items.map(i => i.id === item.id ? { ...i, is_active: nextActive } : i))
+    supabase.from('nfc_items').update({ is_active: nextActive }).eq('id', item.id)
       .then(({ error }) => {
         if (error) { setItems(prev); showToast('Failed to update status', 'error') }
       })
+      .finally(() => togglingRef.current.delete(item.id))
   }
 
   function handleDeleteConfirm() {
@@ -135,13 +141,18 @@ export default function NfcItemsTable() {
 
   async function handleResendInvite(item) {
     const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ mode: 'resend', email: item.ownerEmail }),
-    })
-    if (res.ok) showToast(`Invite resent to ${item.ownerEmail}`, 'success')
-    else showToast('Failed to resend invite', 'error')
+    if (!session) { showToast('Session expired — please refresh', 'error'); return }
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ mode: 'resend', email: item.ownerEmail }),
+      })
+      if (res.ok) showToast(`Invite resent to ${item.ownerEmail}`, 'success')
+      else showToast('Failed to resend invite', 'error')
+    } catch {
+      showToast('Failed to resend invite', 'error')
+    }
   }
 
   function copySlugUrl(item) {
@@ -280,7 +291,7 @@ export default function NfcItemsTable() {
                       </td>
                       {/* Taps */}
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300 tabular-nums">
-                        {item.tapCount}
+                        {item.tapCount ?? '—'}
                       </td>
                       {/* Created */}
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -415,6 +426,8 @@ export default function NfcItemsTable() {
       {/* Toast */}
       {toast && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg transition-opacity
             ${toast.type === 'error' ? 'bg-rose-600' : 'bg-gray-900 dark:bg-gray-700'}`}
         >

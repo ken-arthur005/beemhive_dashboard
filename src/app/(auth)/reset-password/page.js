@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Eye, EyeOff, LockKeyhole, ShieldCheck, Clock, Link2Off } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, ShieldCheck, Clock, Link2Off as LinkOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PasswordStrength from '@/components/shared/password-strength'
 
@@ -197,6 +197,7 @@ function ResetPasswordForm() {
               onChange={e => { setPassword(e.target.value); setInlineError(null) }}
               onBlur={() => setPasswordTouched(true)}
               placeholder="••••••••"
+              maxLength={128}
               disabled={submitting}
               className={`${inputClass} pr-10`}
             />
@@ -207,7 +208,7 @@ function ResetPasswordForm() {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </div>
           </div>
-          {passwordError && <p className="mt-1 text-xs text-rose-600">{passwordError}</p>}
+          {passwordError && <p role="alert" className="mt-1 text-xs text-rose-600">{passwordError}</p>}
           <PasswordStrength password={password} />
         </div>
 
@@ -221,6 +222,7 @@ function ResetPasswordForm() {
               onChange={e => { setConfirm(e.target.value); setConfirmTouched(true) }}
               onBlur={() => setConfirmTouched(true)}
               placeholder="••••••••"
+              maxLength={128}
               disabled={submitting}
               className={`${inputClass} pr-10`}
             />
@@ -231,12 +233,12 @@ function ResetPasswordForm() {
               {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </div>
           </div>
-          {confirmError && <p className="mt-1 text-xs text-rose-600">{confirmError}</p>}
+          {confirmError && <p role="alert" className="mt-1 text-xs text-rose-600">{confirmError}</p>}
         </div>
 
         {inlineError && (
           <div>
-            <p className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
+            <p role="alert" className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
             <div className="mt-2 text-center">
               <a href="/forgot-password" className="text-xs text-gray-500 hover:text-gray-700 hover:underline">
                 Request new link
@@ -246,7 +248,11 @@ function ResetPasswordForm() {
         )}
 
         <div
+          role="button"
+          tabIndex={0}
           onClick={handleSubmit}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSubmit() } }}
+          aria-disabled={submitting}
           className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 transition-colors cursor-pointer select-none
             ${submitting
               ? 'bg-amber-300 cursor-not-allowed'

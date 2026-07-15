@@ -24,11 +24,17 @@ export default function TapsOverTimeChart({ data, lines, loading, isDark }) {
 
   const axisColor = isDark ? '#6b7280' : '#9ca3af'
   const gridColor = isDark ? '#1f2937' : '#f3f4f6'
+  const hasData = data.length > 0 && data.some(d => lines.some(l => (d[l.key] ?? 0) > 0))
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Taps over time</p>
-      <ResponsiveContainer width="100%" height={260}>
+      {!hasData ? (
+        <div className="h-[260px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+          No tap data for this period
+        </div>
+      ) : null}
+      {hasData && <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
           <CartesianGrid vertical={false} stroke={gridColor} />
           <XAxis
@@ -73,7 +79,7 @@ export default function TapsOverTimeChart({ data, lines, loading, isDark }) {
             />
           ))}
         </LineChart>
-      </ResponsiveContainer>
+      </ResponsiveContainer>}
     </div>
   )
 }

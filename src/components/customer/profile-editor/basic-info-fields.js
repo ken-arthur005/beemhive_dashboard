@@ -11,10 +11,11 @@ export default function BasicInfoFields({ name, title, bio, fieldErrors, onNameC
       {/* Name */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className={labelClass} style={{ marginBottom: 0 }}>Display name</label>
+          <label htmlFor="profile-name" className={labelClass} style={{ marginBottom: 0 }}>Display name</label>
           <span className="text-xs text-gray-400">{name.length}/60</span>
         </div>
         <input
+          id="profile-name"
           type="text"
           value={name}
           onChange={e => onNameChange(e.target.value.slice(0, 60))}
@@ -30,10 +31,11 @@ export default function BasicInfoFields({ name, title, bio, fieldErrors, onNameC
       {/* Title */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className={labelClass} style={{ marginBottom: 0 }}>Title or role</label>
+          <label htmlFor="profile-title" className={labelClass} style={{ marginBottom: 0 }}>Title or role</label>
           <span className="text-xs text-gray-400">{title.length}/80</span>
         </div>
         <input
+          id="profile-title"
           type="text"
           value={title}
           onChange={e => onTitleChange(e.target.value.slice(0, 80))}
@@ -46,10 +48,11 @@ export default function BasicInfoFields({ name, title, bio, fieldErrors, onNameC
       {/* Bio */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className={labelClass} style={{ marginBottom: 0 }}>Bio</label>
+          <label htmlFor="profile-bio" className={labelClass} style={{ marginBottom: 0 }}>Bio</label>
           <span className="text-xs text-gray-400">{bio.length}/200</span>
         </div>
         <textarea
+          id="profile-bio"
           value={bio}
           onChange={e => onBioChange(e.target.value.slice(0, 200))}
           onInput={e => {

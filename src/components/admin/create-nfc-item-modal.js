@@ -104,6 +104,12 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
 
+    if (!session) {
+      setErrorBanner('Your session has expired. Please refresh the page and try again.')
+      setSubmitting(false)
+      return
+    }
+
     let res, json
     try {
       res = await fetch('/api/invite', {
@@ -217,6 +223,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
                   onChange={e => setField('customerName', e.target.value)}
                   onBlur={() => touch('customerName')}
                   placeholder="e.g. Kofi Mensah"
+                  maxLength={100}
                   disabled={submitting}
                   className={inputClass}
                 />
@@ -313,7 +320,7 @@ export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
 
               {/* Error banner */}
               {errorBanner && (
-                <div className="rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-3 py-2">
+                <div role="alert" className="rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-3 py-2">
                   <p className="text-sm text-rose-600 dark:text-rose-400">{errorBanner}</p>
                 </div>
               )}

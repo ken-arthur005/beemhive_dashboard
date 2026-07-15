@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Search, MoreHorizontal, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
@@ -105,7 +105,7 @@ export default function CustomersTable() {
         return na.localeCompare(nb)
       })
     } else if (sortBy === 'nfc_count') {
-      result = [...result].sort((a, b) => b.nfc_item_count - a.nfc_item_count)
+      result = [...result].sort((a, b) => (b.nfc_item_count ?? 0) - (a.nfc_item_count ?? 0))
     }
     // 'newest' is default order from API — no re-sort needed
 
@@ -126,13 +126,18 @@ export default function CustomersTable() {
 
   async function handleResendInvite(customer) {
     const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch('/api/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ mode: 'resend', email: customer.email }),
-    })
-    if (res.ok) showToast(`Invite resent to ${customer.email}`, 'success')
-    else showToast('Failed to resend invite', 'error')
+    if (!session) { showToast('Session expired — please refresh', 'error'); return }
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ mode: 'resend', email: customer.email }),
+      })
+      if (res.ok) showToast(`Invite resent to ${customer.email}`, 'success')
+      else showToast('Failed to resend invite', 'error')
+    } catch {
+      showToast('Failed to resend invite', 'error')
+    }
   }
 
   function copySlug(slug) {
@@ -237,9 +242,8 @@ export default function CustomersTable() {
                     const displayName = customer.name || customer.email
 
                     return (
-                      <>
+                      <React.Fragment key={customer.user_id}>
                         <tr
-                          key={customer.user_id}
                           onClick={() => toggleExpand(customer.user_id)}
                           className="border-b border-gray-100 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors cursor-pointer"
                         >
@@ -344,7 +348,7 @@ export default function CustomersTable() {
 
                         {/* Inline expand panel */}
                         {isExpanded && (
-                          <tr key={`${customer.user_id}-detail`} className="border-b border-gray-100 dark:border-gray-800/60">
+                          <tr className="border-b border-gray-100 dark:border-gray-800/60">
                             <td colSpan={6} className="px-0 py-0">
                               <div className="transition-all duration-200 overflow-hidden">
                                 <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
@@ -361,12 +365,12 @@ export default function CustomersTable() {
                                     <div className="flex-1 min-w-0 space-y-1">
                                       {customer.name ? (
                                         <>
-                                          <p className="font-semibold text-gray-900 dark:text-gray-100">{customer.name}</p>
+                                          <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{customer.name}</p>
                                           {customer.title && (
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{customer.title}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{customer.title}</p>
                                           )}
                                           {customer.bio && (
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{customer.bio}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-3">{customer.bio}</p>
                                           )}
                                         </>
                                       ) : (
@@ -411,7 +415,7 @@ export default function CustomersTable() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     )
                   })
                 )}
@@ -473,6 +477,8 @@ export default function CustomersTable() {
       {/* Toast */}
       {toast && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg transition-opacity
             ${toast.type === 'error' ? 'bg-rose-600' : 'bg-gray-900 dark:bg-gray-700'}`}
         >

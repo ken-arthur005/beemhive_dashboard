@@ -95,6 +95,7 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
           onBlur={handleUrlBlur}
           onFocus={() => setUrlError(null)}
           placeholder={currentType.placeholder}
+          maxLength={500}
           disabled={disabled}
           className="flex-1 min-w-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50"
         />

@@ -54,41 +54,50 @@ export default function AdminAnalyticsPage() {
   // Query 1 — summary stats (never re-fires)
   useEffect(() => {
     async function loadStats() {
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
+      try {
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0)
 
-      const [itemsRes, customersRes, todayRes] = await Promise.all([
-        supabase.from('nfc_items').select('*', { count: 'exact', head: true }),
-        supabase.from('users_roles').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
-        supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()),
-      ])
+        const [itemsRes, customersRes, todayRes] = await Promise.all([
+          supabase.from('nfc_items').select('*', { count: 'exact', head: true }),
+          supabase.from('users_roles').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
+          supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()),
+        ])
 
-      setTotalItems(itemsRes.count ?? 0)
-      setTotalCustomers(customersRes.count ?? 0)
-      setTapsToday(todayRes.count ?? 0)
-      setStatsLoading(false)
+        setTotalItems(itemsRes.count ?? 0)
+        setTotalCustomers(customersRes.count ?? 0)
+        setTapsToday(todayRes.count ?? 0)
+      } finally {
+        setStatsLoading(false)
+      }
     }
     loadStats()
   }, [])
 
   // Query 2 — time-series (re-fires on range change only)
   useEffect(() => {
+    let cancelled = false
+
     async function loadTimeSeries() {
       setTapsLoading(true)
-      const startDate = getRangeStart(rangeDays, 2)
+      try {
+        const startDate = getRangeStart(rangeDays, 2)
 
-      let q = supabase
-        .from('tap_events')
-        .select('created_at, nfc_item_id')
-        .order('created_at', { ascending: true })
+        let q = supabase
+          .from('tap_events')
+          .select('created_at, nfc_item_id')
+          .order('created_at', { ascending: true })
 
-      if (startDate) q = q.gte('created_at', startDate)
+        if (startDate) q = q.gte('created_at', startDate)
 
-      const { data } = await q
-      setTapEvents(data ?? [])
-      setTapsLoading(false)
+        const { data } = await q
+        if (!cancelled) setTapEvents(data ?? [])
+      } finally {
+        if (!cancelled) setTapsLoading(false)
+      }
     }
     loadTimeSeries()
+    return () => { cancelled = true }
   }, [range])
 
   // Query 3 — leaderboard + device breakdown + activity feed (fires once)
@@ -256,6 +265,7 @@ function PageHeader({ range, setRange }) {
           <button
             key={opt.label}
             onClick={() => setRange(opt.label)}
+            aria-pressed={range === opt.label}
             className={`px-3 py-1.5 text-xs font-medium transition-colors
               ${range === opt.label
                 ? 'bg-amber-500 text-gray-900'

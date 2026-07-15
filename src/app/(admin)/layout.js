@@ -38,7 +38,7 @@ export default function AdminLayout({ children }) {
 
       setUserEmail(session.user.email ?? '')
       setIsLoading(false)
-    })
+    }).catch(() => router.push('/login'))
   }, [])
 
   function handleToggleCollapse() {

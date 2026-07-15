@@ -41,7 +41,7 @@ export default function CustomerLayout({ children }) {
       setUserId(session.user.id)
       setUserEmail(session.user.email ?? '')
       setIsLoading(false)
-    })
+    }).catch(() => router.push('/login'))
   }, [])
 
   function handleToggleCollapse() {

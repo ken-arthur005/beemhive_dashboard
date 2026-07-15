@@ -78,7 +78,7 @@ export default function TopItemsList({ items, loading }) {
 
                 {/* Tap count */}
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 tabular-nums shrink-0">
-                  {item.tap_count.toLocaleString()}
+                  {(item.tap_count ?? 0).toLocaleString()}
                 </span>
               </div>
             )

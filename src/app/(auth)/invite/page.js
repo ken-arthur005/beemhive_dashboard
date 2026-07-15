@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Eye, EyeOff, UserCheck, Link2Off, Clock } from 'lucide-react'
+import { Eye, EyeOff, UserCheck, Link2Off as LinkOff, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PasswordStrength from '@/components/shared/password-strength'
 
@@ -150,6 +150,7 @@ export default function InvitePage() {
                   onChange={e => { setPassword(e.target.value); setInlineError(null) }}
                   onBlur={() => setPasswordTouched(true)}
                   placeholder="••••••••"
+                  maxLength={128}
                   disabled={submitting}
                   className={`${inputClass} pr-10`}
                 />
@@ -160,7 +161,7 @@ export default function InvitePage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </div>
               </div>
-              {passwordError && <p className="mt-1 text-xs text-rose-600">{passwordError}</p>}
+              {passwordError && <p role="alert" className="mt-1 text-xs text-rose-600">{passwordError}</p>}
               <PasswordStrength password={password} />
             </div>
 
@@ -174,6 +175,7 @@ export default function InvitePage() {
                   onChange={e => { setConfirm(e.target.value); setConfirmTouched(true) }}
                   onBlur={() => setConfirmTouched(true)}
                   placeholder="••••••••"
+                  maxLength={128}
                   disabled={submitting}
                   className={`${inputClass} pr-10`}
                 />
@@ -184,17 +186,21 @@ export default function InvitePage() {
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </div>
               </div>
-              {confirmError && <p className="mt-1 text-xs text-rose-600">{confirmError}</p>}
+              {confirmError && <p role="alert" className="mt-1 text-xs text-rose-600">{confirmError}</p>}
             </div>
 
             {/* Inline error */}
             {inlineError && (
-              <p className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
+              <p role="alert" className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
             )}
 
             {/* Submit */}
             <div
+              role="button"
+              tabIndex={0}
               onClick={submitting ? undefined : handleSubmit}
+              onKeyDown={e => { if (!submitting && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleSubmit() } }}
+              aria-disabled={submitting}
               className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 transition-colors cursor-pointer select-none
                 ${submitting
                   ? 'bg-amber-300 cursor-not-allowed'

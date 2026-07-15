@@ -20,6 +20,17 @@ export default function DeviceBreakdownChart({ mobile, desktop, loading, isDark 
   ]
   const colors = ['#f59e0b', isDark ? '#451a03' : '#fef3c7']
 
+  if (total === 0) {
+    return (
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device breakdown</p>
+        <div className="flex-1 flex items-center justify-center h-[220px] text-sm text-gray-400 dark:text-gray-500">
+          No data yet
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device breakdown</p>

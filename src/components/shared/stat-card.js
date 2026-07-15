@@ -26,7 +26,7 @@ export default function StatCard({ icon: Icon, value, label, trend, tooltip, loa
         </div>
       )}
       <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums leading-none mt-1">
-        {value}
+        {value ?? '—'}
       </p>
       <div className="flex items-center gap-1.5 flex-wrap">
         {tooltip ? (

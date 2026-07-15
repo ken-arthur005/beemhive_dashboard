@@ -92,17 +92,22 @@ export default function ForgotPasswordPage() {
                   onBlur={() => setEmailTouched(true)}
                   placeholder="you@example.com"
                   disabled={loading}
+                  maxLength={254}
                   className={inputClass}
                 />
-                {emailError && <p className="mt-1 text-xs text-rose-600">{emailError}</p>}
+                {emailError && <p role="alert" className="mt-1 text-xs text-rose-600">{emailError}</p>}
               </div>
 
               {inlineError && (
-                <p className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
+                <p role="alert" className="text-xs text-rose-700 bg-rose-50 rounded-lg px-3 py-2">{inlineError}</p>
               )}
 
               <div
+                role="button"
+                tabIndex={0}
                 onClick={handleSubmit}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSubmit() } }}
+                aria-disabled={loading}
                 className={`w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-900 transition-colors cursor-pointer select-none
                   ${loading
                     ? 'bg-amber-300 cursor-not-allowed'

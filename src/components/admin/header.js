@@ -23,6 +23,7 @@ export default function Header({ onOpenMobile, userEmail }) {
       {/* Mobile hamburger */}
       <button
         onClick={onOpenMobile}
+        aria-label="Open navigation"
         className="md:hidden p-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <Menu size={20} />
@@ -40,6 +41,7 @@ export default function Header({ onOpenMobile, userEmail }) {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           className="text-gray-600 dark:text-gray-300"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}

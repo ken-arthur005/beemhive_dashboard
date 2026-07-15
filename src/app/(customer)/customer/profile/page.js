@@ -88,41 +88,43 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
 
-      const uid = session.user.id
-      setUserId(uid)
-      setUserEmail(session.user.email ?? '')
+        const uid = session.user.id
+        setUserId(uid)
+        setUserEmail(session.user.email ?? '')
 
-      const [profileRes, itemRes] = await Promise.all([
-        supabase.from('profiles')
-          .select('name, title, bio, links, show_save_contact, photo_url, background')
-          .eq('user_id', uid)
-          .maybeSingle(),
-        supabase.from('nfc_items')
-          .select('slug')
-          .eq('owner_id', uid)
-          .limit(1)
-          .maybeSingle(),
-      ])
+        const [profileRes, itemRes] = await Promise.all([
+          supabase.from('profiles')
+            .select('name, title, bio, links, show_save_contact, photo_url, background')
+            .eq('user_id', uid)
+            .maybeSingle(),
+          supabase.from('nfc_items')
+            .select('slug')
+            .eq('owner_id', uid)
+            .limit(1)
+            .maybeSingle(),
+        ])
 
-      if (profileRes.data) {
-        const p = profileRes.data
-        setName(p.name ?? '')
-        setTitle(p.title ?? '')
-        setBio(p.bio ?? '')
-        setLinks(Array.isArray(p.links) ? p.links : [])
-        setShowSaveContact(p.show_save_contact ?? true)
-        setBackground(p.background ?? null)
-        setPhotoUrl(p.photo_url ?? null)
+        if (profileRes.data) {
+          const p = profileRes.data
+          setName(p.name ?? '')
+          setTitle(p.title ?? '')
+          setBio(p.bio ?? '')
+          setLinks(Array.isArray(p.links) ? p.links : [])
+          setShowSaveContact(p.show_save_contact ?? true)
+          setBackground(p.background ?? null)
+          setPhotoUrl(p.photo_url ?? null)
+        }
+
+        if (itemRes.data) {
+          setSlug(itemRes.data.slug)
+        }
+      } finally {
+        setIsLoading(false)
       }
-
-      if (itemRes.data) {
-        setSlug(itemRes.data.slug)
-      }
-
-      setIsLoading(false)
     }
     load()
   }, [])
@@ -166,6 +168,7 @@ export default function ProfilePage() {
   }
 
   async function handleSave(silent = false, overrides = {}) {
+    if (isSaving) return
     const effectiveName = name
     if (!effectiveName.trim()) {
       if (!silent) setFieldErrors({ name: 'Name is required' })

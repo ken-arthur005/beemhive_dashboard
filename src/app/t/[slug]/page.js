@@ -114,11 +114,11 @@ function ActiveProfile({ profile, ownerId }) {
 
         {/* Name, title, bio */}
         <div className="text-center mb-6">
-          <h1 className={`text-2xl font-bold ${textClass}`} style={shadowStyle}>
+          <h1 className={`text-2xl font-bold break-words ${textClass}`} style={shadowStyle}>
             {profile.name}
           </h1>
           {profile.title && (
-            <p className={`mt-1 text-sm font-medium ${mutedClass}`} style={shadowStyle}>
+            <p className={`mt-1 text-sm font-medium break-words ${mutedClass}`} style={shadowStyle}>
               {profile.title}
             </p>
           )}
@@ -198,7 +198,7 @@ export default async function PublicProfilePage({ params }) {
     .eq('ip_hash', ipHash)
     .gte('created_at', fiveMinutesAgo)
 
-  if (count === 0) {
+  if (!count) {
     await supabase.from('tap_events').insert({
       nfc_item_id: nfcItem.id,
       device_type: deviceType,

@@ -14,7 +14,10 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
 
   const prevPhotoRef = useRef(photoUrl)
 
+  const [isRemoving, setIsRemoving] = useState(false)
+
   function handleClick() {
+    if (isUploading) return
     fileRef.current?.click()
   }
 
@@ -45,6 +48,10 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
       URL.revokeObjectURL(objectUrl)
       canvas.toBlob(blob => uploadBlob(blob), 'image/jpeg', 0.85)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      setError('Could not read this image file — please try another.')
     }
   }
 
@@ -79,21 +86,34 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
   }
 
   async function handleRemove() {
+    if (isRemoving) return
     setError(null)
-    const supabase = createClient()
-    await supabase.storage.from('profile-photos').remove([`${userId}/avatar.jpg`])
-    await supabase.from('profiles').update({ photo_url: null }).eq('user_id', userId)
-    prevPhotoRef.current = null
-    setPreview(null)
-    onPhotoChange(null)
-    setProfile(prev => ({ ...prev, photo_url: null }))
+    setIsRemoving(true)
+    try {
+      const supabase = createClient()
+      await supabase.storage.from('profile-photos').remove([`${userId}/avatar.jpg`])
+      const { error: updateError } = await supabase.from('profiles').update({ photo_url: null }).eq('user_id', userId)
+      if (updateError) { setError('Could not remove photo — please try again.'); return }
+      prevPhotoRef.current = null
+      setPreview(null)
+      onPhotoChange(null)
+      setProfile(prev => ({ ...prev, photo_url: null }))
+    } catch {
+      setError('Could not remove photo — please try again.')
+    } finally {
+      setIsRemoving(false)
+    }
   }
 
   return (
     <div className="flex flex-col items-center gap-3">
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Change profile photo"
         onClick={handleClick}
-        className="relative w-[120px] h-[120px] rounded-full cursor-pointer group select-none shrink-0"
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+        className={`relative w-[120px] h-[120px] rounded-full select-none shrink-0 ${isUploading ? 'cursor-wait' : 'cursor-pointer'} group`}
       >
         {preview ? (
           <img
@@ -122,9 +142,10 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
       {preview && !isUploading && (
         <button
           onClick={handleRemove}
-          className="text-xs text-gray-400 hover:text-rose-500 transition-colors"
+          disabled={isRemoving}
+          className="text-xs text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-50"
         >
-          Remove photo
+          {isRemoving ? 'Removing…' : 'Remove photo'}
         </button>
       )}
 

@@ -65,8 +65,9 @@ export default function CustomerAnalyticsPage() {
       .order('created_at', { ascending: true })
       .then(({ data }) => {
         setCards(data ?? [])
-        setCardsLoading(false)
       })
+      .catch(() => {})
+      .finally(() => setCardsLoading(false))
   }, [userId])
 
   // Query 2 — Tap events for selected range (re-runs on range change, not card change)
@@ -77,6 +78,7 @@ export default function CustomerAnalyticsPage() {
       return
     }
 
+    let cancelled = false
     setTapsLoading(true)
     const cardIds = cards.map(c => c.id)
     // Fetch 2× range so we have the previous period for trend comparison
@@ -91,9 +93,12 @@ export default function CustomerAnalyticsPage() {
     if (startDate) q = q.gte('created_at', startDate)
 
     q.then(({ data }) => {
-      setTapEvents(data ?? [])
-      setTapsLoading(false)
+      if (!cancelled) setTapEvents(data ?? [])
     })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setTapsLoading(false) })
+
+    return () => { cancelled = true }
   }, [userId, range, cardsLoading])
 
   // ── Derived data (all via useMemo) ──────────────────────────────────────────
@@ -236,10 +241,14 @@ export default function CustomerAnalyticsPage() {
 
   async function copyProfileUrl() {
     if (!firstCardUrl) return
-    try { await navigator.clipboard.writeText(firstCardUrl) } catch { /* fallback not needed here */ }
-    setCopiedUrl(true)
-    toast.success('Copied to clipboard')
-    setTimeout(() => setCopiedUrl(false), 1500)
+    try {
+      await navigator.clipboard.writeText(firstCardUrl)
+      setCopiedUrl(true)
+      toast.success('Copied to clipboard')
+      setTimeout(() => setCopiedUrl(false), 1500)
+    } catch {
+      toast.error('Could not copy — please copy the URL manually')
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -381,6 +390,7 @@ function PageHeader({ range, setRange, cards, selectedCard, setSelectedCard }) {
             <button
               key={opt.label}
               onClick={() => setRange(opt.label)}
+              aria-pressed={range === opt.label}
               className={`px-3 py-1.5 text-xs font-medium transition-colors
                 ${range === opt.label
                   ? 'bg-amber-500 text-gray-900'
