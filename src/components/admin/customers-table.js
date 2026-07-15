@@ -13,6 +13,10 @@ import {
   DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu'
 import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog'
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
@@ -47,6 +51,8 @@ export default function CustomersTable() {
   const [expandedId, setExpandedId] = useState(null)
   const [toast, setToast] = useState(null)
   const [copiedSlug, setCopiedSlug] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   function showToast(message, type = 'success') {
     setToast({ message, type })
@@ -137,6 +143,33 @@ export default function CustomersTable() {
       else showToast('Failed to resend invite', 'error')
     } catch {
       showToast('Failed to resend invite', 'error')
+    }
+  }
+
+  async function handleDeleteCustomer() {
+    if (!deleteTarget) return
+    const target = deleteTarget
+    setIsDeleting(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      showToast('Session expired — please refresh', 'error')
+      setIsDeleting(false)
+      return
+    }
+    try {
+      const res = await fetch(`/api/admin/customers/${target.user_id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to delete customer')
+      setCustomers(prev => prev.filter(c => c.user_id !== target.user_id))
+      setDeleteTarget(null)
+      showToast(`${target.name || target.email} has been deleted`, 'success')
+    } catch (e) {
+      showToast(e.message, 'error')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -341,6 +374,13 @@ export default function CustomersTable() {
                                     </DropdownMenuSubContent>
                                   </DropdownMenuSub>
                                 )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setDeleteTarget(customer)}
+                                >
+                                  Delete customer
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
@@ -473,6 +513,28 @@ export default function CustomersTable() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{deleteTarget?.name || deleteTarget?.email}</strong> and all their NFC cards. Tap history will be preserved but unlinked. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCustomer}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white border-transparent"
+            >
+              {isDeleting ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Toast */}
       {toast && (
