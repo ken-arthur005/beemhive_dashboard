@@ -36,7 +36,10 @@ export async function POST(request) {
 
     if (mode === 'resend') {
       if (!email) return Response.json({ error: 'Email required' }, { status: 400 })
-      const { error } = await supabase.auth.admin.inviteUserByEmail(email)
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+        redirectTo: `${appUrl}/invite`,
+      })
       if (error) return Response.json({ error: error.message }, { status: 500 })
       return Response.json({ success: true })
     }
@@ -53,9 +56,14 @@ export async function POST(request) {
 
     if (existing) return Response.json({ error: 'slug_taken' }, { status: 409 })
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
     const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
-      { data: { full_name: customerName } }
+      {
+        data: { full_name: customerName },
+        redirectTo: `${appUrl}/invite`,
+      }
     )
     if (inviteError) {
       const status = inviteError.status === 429 ? 429 : 500
