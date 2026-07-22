@@ -38,7 +38,7 @@ export async function POST(request) {
       if (!email) return Response.json({ error: 'Email required' }, { status: 400 })
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
       const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${appUrl}/invite`,
+        redirectTo: `${appUrl}/auth/callback?next=/invite`,
       })
       if (error) return Response.json({ error: error.message }, { status: 500 })
       return Response.json({ success: true })
@@ -62,7 +62,7 @@ export async function POST(request) {
       email,
       {
         data: { full_name: customerName },
-        redirectTo: `${appUrl}/invite`,
+        redirectTo: `${appUrl}/auth/callback?next=/invite`,
       }
     )
     if (inviteError) {

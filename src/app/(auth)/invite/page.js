@@ -38,40 +38,10 @@ export default function InvitePage() {
   const [inlineError, setInlineError] = useState(null)
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search)
-    const code = queryParams.get('code')
-
-    // Hash-based flow (#access_token=... for older/implicit Supabase configs)
-    const hashParams = new URLSearchParams(window.location.hash.slice(1))
-    const accessToken = hashParams.get('access_token')
-    const refreshToken = hashParams.get('refresh_token')
-    const type = hashParams.get('type')
-
     const supabase = createClient()
-
-    if (code) {
-      // PKCE flow — exchange code for session
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          const msg = error.message?.toLowerCase() ?? ''
-          setTokenState(msg.includes('expired') ? 'expired' : 'invalid')
-        } else {
-          setTokenState('ready')
-        }
-      })
-    } else if (accessToken && type === 'invite') {
-      // Implicit / hash flow
-      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ error }) => {
-        if (error) {
-          const msg = error.message?.toLowerCase() ?? ''
-          setTokenState(msg.includes('expired') ? 'expired' : 'invalid')
-        } else {
-          setTokenState('ready')
-        }
-      })
-    } else {
-      setTokenState('invalid')
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setTokenState(session ? 'ready' : 'invalid')
+    })
   }, [])
 
   const passwordError = passwordTouched && password.length < 8 ? 'Password must be at least 8 characters.' : null
