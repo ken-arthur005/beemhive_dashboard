@@ -28,9 +28,6 @@ export default function InvitePage() {
 
   // token state: 'checking' | 'ready' | 'invalid' | 'expired'
   const [tokenState, setTokenState] = useState('checking')
-  const [accessToken, setAccessToken] = useState(null)
-  const [refreshToken, setRefreshToken] = useState(null)
-
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -41,20 +38,23 @@ export default function InvitePage() {
   const [inlineError, setInlineError] = useState(null)
 
   useEffect(() => {
-    const hash = window.location.hash.slice(1)
-    const params = new URLSearchParams(hash)
-    const access = params.get('access_token')
-    const refresh = params.get('refresh_token')
-    const type = params.get('type')
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
 
-    if (!access || type !== 'invite') {
+    if (!code) {
       setTokenState('invalid')
       return
     }
 
-    setAccessToken(access)
-    setRefreshToken(refresh)
-    setTokenState('ready')
+    const supabase = createClient()
+    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      if (error) {
+        const msg = error.message?.toLowerCase() ?? ''
+        setTokenState(msg.includes('expired') ? 'expired' : 'invalid')
+      } else {
+        setTokenState('ready')
+      }
+    })
   }, [])
 
   const passwordError = passwordTouched && password.length < 8 ? 'Password must be at least 8 characters.' : null
@@ -69,22 +69,6 @@ export default function InvitePage() {
     setInlineError(null)
 
     const supabase = createClient()
-
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    })
-
-    if (sessionError) {
-      const msg = sessionError.message?.toLowerCase() ?? ''
-      if (msg.includes('expired') || msg.includes('invalid')) {
-        setTokenState('expired')
-      } else {
-        setInlineError('Something went wrong. Please request a new invite link from Beem Hive.')
-        setSubmitting(false)
-      }
-      return
-    }
 
     const { error: updateError } = await supabase.auth.updateUser({ password })
 
