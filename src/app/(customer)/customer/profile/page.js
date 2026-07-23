@@ -159,6 +159,7 @@ export default function ProfilePage() {
   function handleLinksChange(newLinks) {
     setLinks(newLinks)
     markDirty()
+    scheduleAutoSave()
   }
 
   async function handleSaveContactToggle(val) {
@@ -276,8 +277,9 @@ export default function ProfilePage() {
         <div className="flex items-center gap-2 md:hidden">
           <button
             onClick={() => setIsPreviewOpen(true)}
-            className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="min-h-11 min-w-11 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Preview profile"
+            aria-label="Preview profile"
           >
             <Eye size={18} />
           </button>
@@ -331,6 +333,8 @@ export default function ProfilePage() {
                 return (
                   <button
                     key={preset.name}
+                    aria-label={preset.name}
+                    aria-pressed={isSelected}
                     title={preset.name}
                     onClick={() => { setBackground(preset.value); markDirty(); scheduleAutoSave({ backgroundOverride: preset.value }) }}
                     className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 transition-all"
@@ -402,6 +406,8 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <div className="h-20 md:hidden" aria-hidden="true" />
 
       {/* Mobile fixed bottom save bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3">

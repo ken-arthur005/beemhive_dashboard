@@ -21,8 +21,8 @@ function NavItem({ item, isCollapsed, onClick }) {
 
   const linkClass = `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
     ${isActive
-      ? 'bg-amber-500 text-gray-900 dark:bg-amber-400 dark:text-gray-900'
-      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+      ? 'bg-amber-500 text-gray-900'
+      : 'text-gray-400 hover:bg-white/10 hover:text-white'
     }
     ${isCollapsed ? 'justify-center px-2' : ''}
   `
@@ -85,16 +85,16 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
   const identityTooltipLabel = profile.name || userEmail
 
   const sidebarContent = (
-    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+    <div className={`flex flex-col h-full bg-[#111827] border-r border-white/10 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center gap-3 px-3 py-4 border-b border-gray-200 dark:border-gray-800 ${isCollapsed ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-3 px-3 py-4 border-b border-white/10 ${isCollapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
         {!isCollapsed && (
           <>
-            <span className="text-gray-900 dark:text-gray-100 font-semibold text-sm flex-1">Beem Hive</span>
+            <span className="text-white font-semibold text-sm flex-1">Beem Hive</span>
             <button
               onClick={onToggleCollapse}
-              className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
               title="Collapse sidebar"
             >
               <ChevronLeft size={16} />
@@ -107,7 +107,7 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
               render={
                 <button
                   onClick={onToggleCollapse}
-                  className="p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 />
               }
             >
@@ -131,7 +131,7 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
       </nav>
 
       {/* Identity + sign out */}
-      <div className={`flex items-center gap-2 px-3 py-3 border-t border-gray-200 dark:border-gray-800 ${isCollapsed ? 'justify-center flex-col gap-2' : ''}`}>
+      <div className={`flex items-center gap-2 px-3 py-3 border-t border-white/10 ${isCollapsed ? 'justify-center flex-col gap-2' : ''}`}>
         {isCollapsed ? (
           <>
             <Tooltip>
@@ -145,7 +145,7 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
                 render={
                   <button
                     onClick={handleSignOut}
-                    className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                   />
                 }
               >
@@ -159,18 +159,18 @@ export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCol
             <ProfileAvatar />
             <div className="flex flex-col min-w-0 flex-1">
               {profile.name ? (
-                <span className="text-gray-900 dark:text-gray-100 text-xs font-medium truncate">{profile.name}</span>
+                <span className="text-white text-xs font-medium truncate">{profile.name}</span>
               ) : (
-                <span className="text-gray-400 dark:text-gray-500 text-xs italic">Set up your profile</span>
+                <span className="text-gray-500 text-xs italic">Set up your profile</span>
               )}
-              <span className="text-gray-500 dark:text-gray-400 text-xs truncate" title={userEmail}>{userEmail}</span>
+              <span className="text-gray-400 text-xs truncate" title={userEmail}>{userEmail}</span>
             </div>
             <Tooltip>
               <TooltipTrigger
                 render={
                   <button
                     onClick={handleSignOut}
-                    className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+                    className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
                   />
                 }
               >

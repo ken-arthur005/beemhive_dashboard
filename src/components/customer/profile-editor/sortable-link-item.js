@@ -60,34 +60,78 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
         ${isDragging ? 'shadow-lg scale-[1.02] z-10 relative' : ''}
       `}
     >
-      <div className="flex items-center gap-2">
-        {/* Drag handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          disabled={disabled}
-          className="cursor-grab active:cursor-grabbing p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 touch-none shrink-0 disabled:cursor-default"
-          tabIndex={-1}
-        >
-          <GripVertical size={16} />
-        </button>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          {/* Drag handle */}
+          <button
+            {...attributes}
+            {...listeners}
+            disabled={disabled}
+            className="cursor-grab active:cursor-grabbing p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 touch-none shrink-0 disabled:cursor-default"
+            tabIndex={-1}
+          >
+            <GripVertical size={16} />
+          </button>
 
-        {/* Type icon */}
-        <Icon size={16} className="text-gray-400 shrink-0" />
+          {/* Type icon */}
+          <Icon size={16} className="text-gray-400 shrink-0" />
 
-        {/* Type dropdown */}
-        <Select value={link.type} onValueChange={handleTypeChange} disabled={disabled}>
-          <SelectTrigger className="w-36 shrink-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {linkTypes.map(t => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Type dropdown */}
+          <Select value={link.type} onValueChange={handleTypeChange} disabled={disabled}>
+            <SelectTrigger className="w-28 sm:w-36 shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {linkTypes.map(t => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        {/* URL input */}
+          {/* URL input — hidden on mobile, shown inline on sm+ */}
+          <input
+            type="text"
+            value={link.url}
+            onChange={handleUrlChange}
+            onBlur={handleUrlBlur}
+            onFocus={() => setUrlError(null)}
+            placeholder={currentType.placeholder}
+            maxLength={500}
+            disabled={disabled}
+            className="hidden sm:block flex-1 min-w-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50"
+          />
+
+          {/* Delete button */}
+          {confirming ? (
+            <div className="flex items-center gap-1 shrink-0 ml-auto">
+              <button
+                onClick={handleConfirmDelete}
+                className="p-1 rounded text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                title="Confirm delete"
+              >
+                <Check size={15} />
+              </button>
+              <button
+                onClick={handleCancelDelete}
+                className="p-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Cancel"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleDeleteClick}
+              disabled={disabled}
+              className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors shrink-0 ml-auto disabled:opacity-40"
+              title="Delete link"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
+        </div>
+
+        {/* URL input — mobile only, full width on its own row */}
         <input
           type="text"
           value={link.url}
@@ -97,37 +141,8 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
           placeholder={currentType.placeholder}
           maxLength={500}
           disabled={disabled}
-          className="flex-1 min-w-0 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50"
+          className="sm:hidden w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50"
         />
-
-        {/* Delete button */}
-        {confirming ? (
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={handleConfirmDelete}
-              className="p-1 rounded text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-              title="Confirm delete"
-            >
-              <Check size={15} />
-            </button>
-            <button
-              onClick={handleCancelDelete}
-              className="p-1 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title="Cancel"
-            >
-              <X size={15} />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleDeleteClick}
-            disabled={disabled}
-            className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors shrink-0 disabled:opacity-40"
-            title="Delete link"
-          >
-            <Trash2 size={15} />
-          </button>
-        )}
       </div>
 
       {urlError && (
