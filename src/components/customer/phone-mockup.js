@@ -2,7 +2,25 @@
 
 import { LINK_TYPES } from './profile-editor/links-editor'
 
-function LinkButton({ link }) {
+const DEFAULT_BG = 'linear-gradient(135deg, #0f172a, #1e293b)'
+
+function resolveTheme(background) {
+  const bg = background || DEFAULT_BG
+  const isLight = /([#]([fFdDeE])|white|light)/i.test(bg)
+  return {
+    bg,
+    nameClass: isLight ? 'text-gray-900' : 'text-white',
+    mutedClass: isLight ? 'text-gray-500' : 'text-white/60',
+    bodyClass: isLight ? 'text-gray-600' : 'text-white/70',
+    footerClass: isLight ? 'text-gray-300' : 'text-white/30',
+    linkClass: isLight ? 'text-gray-800' : 'text-white',
+    linkBg: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.10)',
+    linkBorder: isLight ? '1px solid rgba(0,0,0,0.10)' : '1px solid rgba(255,255,255,0.20)',
+    iconClass: isLight ? 'text-gray-500' : 'text-white/60',
+  }
+}
+
+function LinkButton({ link, linkClass, linkBg, linkBorder, iconClass }) {
   const typeConfig = LINK_TYPES.find(t => t.value === link.type) ?? LINK_TYPES[0]
   const Icon = typeConfig.Icon
   const label = link.url || typeConfig.placeholder
@@ -11,15 +29,17 @@ function LinkButton({ link }) {
     <a
       href={link.url || '#'}
       onClick={e => e.preventDefault()}
-      className="flex items-center gap-2.5 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+      className={`flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 text-sm transition-colors ${linkClass}`}
+      style={{ background: linkBg, border: linkBorder }}
     >
-      <Icon size={15} className="text-gray-500 shrink-0" />
+      <Icon size={15} className={`shrink-0 ${iconClass}`} />
       <span className="truncate">{link.label || label}</span>
     </a>
   )
 }
 
-export default function PhoneMockup({ slug, name, title, bio, links, showSaveContact, photoUrl, userInitial }) {
+export default function PhoneMockup({ slug, name, title, bio, links, showSaveContact, photoUrl, userInitial, background }) {
+  const { bg, nameClass, mutedClass, bodyClass, footerClass, linkClass, linkBg, linkBorder, iconClass } = resolveTheme(background)
   return (
     <div className="rounded-[3rem] border-[8px] border-gray-800 bg-gray-800 shadow-2xl w-[300px] h-[600px] flex flex-col">
       <div className="rounded-[2.4rem] overflow-hidden bg-white flex flex-col flex-1">
@@ -52,7 +72,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
         </div>
 
         {/* Scrollable profile content */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-3">
+        <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-3" style={{ background: bg }}>
           {/* Avatar */}
           <div className="flex flex-col items-center gap-2">
             {photoUrl ? (
@@ -68,12 +88,12 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
             )}
             {name && (
               <div className="text-center">
-                <p className="text-sm font-bold text-gray-900">{name}</p>
-                {title && <p className="text-xs text-gray-500 mt-0.5">{title}</p>}
+                <p className={`text-sm font-bold ${nameClass}`}>{name}</p>
+                {title && <p className={`text-xs mt-0.5 ${mutedClass}`}>{title}</p>}
               </div>
             )}
             {bio && (
-              <p className="text-xs text-gray-600 text-center leading-relaxed">{bio}</p>
+              <p className={`text-xs text-center leading-relaxed ${bodyClass}`}>{bio}</p>
             )}
           </div>
 
@@ -81,7 +101,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
           {links.length > 0 && (
             <div className="flex flex-col gap-1.5">
               {links.map(link => (
-                <LinkButton key={link.id} link={link} />
+                <LinkButton key={link.id} link={link} linkClass={linkClass} linkBg={linkBg} linkBorder={linkBorder} iconClass={iconClass} />
               ))}
             </div>
           )}
@@ -94,7 +114,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
           )}
 
           {/* Footer */}
-          <p className="text-[10px] text-gray-300 text-center mt-auto pt-2">
+          <p className={`text-[10px] text-center mt-auto pt-2 ${footerClass}`}>
             Powered by Beem Hive
           </p>
         </div>

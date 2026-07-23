@@ -135,7 +135,7 @@ export default function InvitePage() {
               {passwordError && <p role="alert" className="mt-1 text-xs text-rose-600">{passwordError}</p>}
               <PasswordStrength password={password} />
             </div>
-
+            
             {/* Confirm password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>

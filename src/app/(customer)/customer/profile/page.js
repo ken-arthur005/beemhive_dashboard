@@ -129,9 +129,9 @@ export default function ProfilePage() {
     load()
   }, [])
 
-  function scheduleAutoSave() {
+  function scheduleAutoSave(overrides = {}) {
     clearTimeout(autoSaveRef.current)
-    autoSaveRef.current = setTimeout(() => handleSave(true), 2000)
+    autoSaveRef.current = setTimeout(() => handleSave(true, overrides), 2000)
   }
 
   function markDirty() {
@@ -185,10 +185,11 @@ export default function ProfilePage() {
       bio,
       links,
       show_save_contact: overrides.showSaveContactOverride ?? showSaveContact,
-      background,
+      background: overrides.backgroundOverride ?? background,
+      updated_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from('profiles').upsert(payload)
+    const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' })
 
     if (error) {
       if (!silent) toast.error('Failed to save — please try again')
@@ -331,7 +332,7 @@ export default function ProfilePage() {
                   <button
                     key={preset.name}
                     title={preset.name}
-                    onClick={() => { setBackground(preset.value); markDirty() }}
+                    onClick={() => { setBackground(preset.value); markDirty(); scheduleAutoSave({ backgroundOverride: preset.value }) }}
                     className="relative w-14 h-14 rounded-xl overflow-hidden ring-2 transition-all"
                     style={{
                       background: preset.value,
