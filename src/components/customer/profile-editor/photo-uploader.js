@@ -111,6 +111,7 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
         role="button"
         tabIndex={0}
         aria-label="Change profile photo"
+        aria-describedby={error ? 'photo-error' : undefined}
         onClick={handleClick}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
         className={`relative w-[120px] h-[120px] rounded-full select-none shrink-0 ${isUploading ? 'cursor-wait' : 'cursor-pointer'} group`}
@@ -150,7 +151,7 @@ export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userIni
       )}
 
       {error && (
-        <p className="text-xs text-rose-500 text-center max-w-[200px]">{error}</p>
+        <p id="photo-error" className="text-xs text-rose-500 text-center max-w-[200px]">{error}</p>
       )}
 
       <input

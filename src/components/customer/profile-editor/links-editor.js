@@ -63,7 +63,6 @@ export default function LinksEditor({ links, onChange, disabled }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Links</h3>
         {atMax ? (
           <Tooltip>
             <TooltipTrigger

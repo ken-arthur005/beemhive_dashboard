@@ -79,6 +79,7 @@ export default function ProfilePage() {
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
+  const [now, setNow] = useState(() => Date.now())
   const [savedFlash, setSavedFlash] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
@@ -128,6 +129,12 @@ export default function ProfilePage() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    if (!lastSaved) return
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [lastSaved])
 
   function scheduleAutoSave(overrides = {}) {
     clearTimeout(autoSaveRef.current)
@@ -230,7 +237,7 @@ export default function ProfilePage() {
   }
 
   const lastSavedLabel = lastSaved
-    ? `Last saved: ${Math.max(0, Math.round((Date.now() - lastSaved.getTime()) / 60000))} min ago`
+    ? `Last saved: ${Math.max(0, Math.round((now - lastSaved.getTime()) / 60000))} min ago`
     : 'Not yet saved'
 
   if (isLoading) {
