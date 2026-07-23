@@ -239,6 +239,6 @@ Cards are programmed manually by the client using **NFC Tools** (iOS/Android). Y
 - [x] Customer: personal analytics
 - [ ] Public: `/t/[slug]` profile page + tap logging
 - [ ] Email templates via Resend
-- [ ] Supabase Storage bucket for profile photos
+- [x] Supabase Storage bucket for profile photos
 - [ ] vCard generation route handler
 - [ ] Final deployment + custom domain
