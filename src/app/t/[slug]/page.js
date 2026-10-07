@@ -1,220 +1,69 @@
-import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
-import Image from 'next/image'
-import {
-  Globe, AtSign, Share2, Briefcase, MessageCircle, Phone, Mail, Link2,
-  ExternalLink, CreditCard, UserPlus,
-} from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
-import { hashIp } from '@/lib/utils'
-import SaveContactButton from '@/components/public/save-contact-button'
+import { notFound } from 'next/navigation'
+import { Globe, AtSign, Share2, Briefcase, MessageCircle, Phone, Mail, Link2, ExternalLink, CreditCard, UserPlus } from 'lucide-react'
+import { publicProfile } from '@/lib/public-profile'
+import { linkDestination } from '@/lib/contact'
+import { checked } from '@/lib/data'
+import { appOrigin } from '@/lib/platform'
 
-const ICON_MAP = {
-  website: Globe,
-  instagram: AtSign,
-  twitter: Share2,
-  linkedin: Briefcase,
-  whatsapp: MessageCircle,
-  phone: Phone,
-  email: Mail,
-  custom: Link2,
-}
+export const dynamic = 'force-dynamic'
+const icons = { website: Globe, instagram: AtSign, twitter: Share2, linkedin: Briefcase, whatsapp: MessageCircle, phone: Phone, email: Mail, custom: Link2 }
+const labels = { website: 'Website', instagram: 'Instagram', twitter: 'Twitter / X', linkedin: 'LinkedIn', whatsapp: 'WhatsApp', phone: 'Phone', email: 'Email', custom: 'Visit link' }
+const defaultBackground = 'linear-gradient(135deg, #0f172a, #1e293b)'
 
-const LINK_LABELS = {
-  website: 'Website',
-  instagram: 'Instagram',
-  twitter: 'Twitter / X',
-  linkedin: 'LinkedIn',
-  whatsapp: 'WhatsApp',
-  phone: 'Phone',
-  email: 'Email',
-}
-
-const DEFAULT_BG = 'linear-gradient(135deg, #0f172a, #1e293b)'
-
-function resolveBackground(background) {
-  const bg = background || DEFAULT_BG
-  const isLight = /([#]([fFdDeE])|white|light)/i.test(bg)
-  return {
-    bg,
-    isLight,
-    textClass: isLight ? 'text-gray-900' : 'text-white',
-    mutedClass: isLight ? 'text-gray-500' : 'text-white/60',
-    subtleClass: isLight ? 'text-gray-400' : 'text-white/40',
-    shadowStyle: isLight ? {} : { textShadow: '0 1px 3px rgba(0,0,0,0.3)' },
-    linkBg: isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.12)',
-    linkBorder: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.2)',
-  }
-}
-
-function getLinkLabel(link) {
-  if (link.label) return link.label
-  if (link.type === 'custom') {
-    try { return new URL(link.url).hostname } catch { return link.url }
-  }
-  return LINK_LABELS[link.type] || link.type
-}
-
-function BeemHiveFooter({ subtleClass }) {
-  return (
-    <div className="mt-10 flex justify-center">
-      <a
-        href="https://beemhive.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`flex items-center gap-2 text-xs ${subtleClass}`}
-      >
-        <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
-        Powered by Beem Hive
-      </a>
-    </div>
-  )
-}
-
-function InactiveCard({ message = 'This NFC card has been temporarily deactivated.' }) {
-  const { bg, textClass, mutedClass, subtleClass } = resolveBackground(null)
-  return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center px-4" style={{ background: bg }}>
-      <CreditCard size={64} className={mutedClass} strokeWidth={1} />
-      <h1 className={`mt-4 text-lg font-semibold ${textClass}`}>This card is not active</h1>
-      <p className={`mt-1 text-sm text-center max-w-xs ${mutedClass}`}>{message}</p>
-      <BeemHiveFooter subtleClass={subtleClass} />
-    </div>
-  )
-}
-
-function ActiveProfile({ profile, ownerId }) {
-  const { bg, isLight, textClass, mutedClass, subtleClass, shadowStyle, linkBg, linkBorder } = resolveBackground(profile.background)
-  const links = Array.isArray(profile.links) ? profile.links : []
-  const initial = profile.name ? profile.name[0].toUpperCase() : '?'
-
-  return (
-    <div className="min-h-screen w-full" style={{ background: bg }}>
-      <div className="max-w-sm mx-auto px-4 py-10">
-
-        {/* Profile photo */}
-        <div className="flex justify-center mb-5">
-          <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white/20 shrink-0">
-            {profile.photo_url ? (
-              <Image
-                src={profile.photo_url}
-                alt={profile.name || 'Profile photo'}
-                width={96}
-                height={96}
-                className="rounded-full object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-3xl font-bold">
-                {initial}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Name, title, bio */}
-        <div className="text-center mb-6">
-          <h1 className={`text-2xl font-bold break-words ${textClass}`} style={shadowStyle}>
-            {profile.name}
-          </h1>
-          {profile.title && (
-            <p className={`mt-1 text-sm font-medium break-words ${mutedClass}`} style={shadowStyle}>
-              {profile.title}
-            </p>
-          )}
-          {profile.bio && (
-            <p className={`mt-2 text-sm leading-relaxed line-clamp-3 ${mutedClass}`} style={shadowStyle}>
-              {profile.bio}
-            </p>
-          )}
-        </div>
-
-        {/* Links */}
-        {links.length > 0 && (
-          <div className="flex flex-col gap-3 mb-3">
-            {links.map((link, i) => {
-              const Icon = ICON_MAP[link.type] || Link2
-              const label = getLinkLabel(link)
-              return (
-                <a
-                  key={link.id || i}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center gap-3 rounded-xl py-3 px-4 transition-opacity hover:opacity-80 ${textClass}`}
-                  style={{ background: linkBg, border: linkBorder }}
-                >
-                  <Icon size={18} className="shrink-0" />
-                  <span className="flex-1 text-sm font-medium truncate">{label}</span>
-                  <ExternalLink size={14} className={`shrink-0 ${mutedClass}`} />
-                </a>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Save contact */}
-        {profile.show_save_contact && (
-          <div className="mt-3">
-            <SaveContactButton ownerId={ownerId} />
-          </div>
-        )}
-
-        <BeemHiveFooter subtleClass={subtleClass} />
-      </div>
-    </div>
-  )
+function isLight(background) {
+  const colors = background.match(/#[a-f0-9]{6}/gi) || ['#0f172a']
+  return colors.reduce((total, color) => {
+    const channels = [1, 3, 5].map(index => parseInt(color.slice(index, index + 2), 16) / 255)
+    return total + channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+  }, 0) / colors.length > 0.65
 }
 
 export default async function PublicProfilePage({ params }) {
   const { slug } = await params
-  const supabase = await createClient()
-  const headersList = await headers()
-
-  // Step 1 — fetch NFC item
-  const { data: nfcItem } = await supabase
-    .from('nfc_items')
-    .select('id, is_active, owner_id, product_type')
-    .eq('slug', slug)
-    .single()
-
-  if (!nfcItem) notFound()
-
-  if (!nfcItem.is_active) return <InactiveCard />
-
-  // Step 2 — log tap event
-  const userAgent = headersList.get('user-agent') || ''
-  const isMobile = /mobile|android|iphone|ipad/i.test(userAgent)
-  const deviceType = isMobile ? 'mobile' : 'desktop'
-  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const referer = headersList.get('referer') || null
-  const ipHash = await hashIp(ip)
-
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-  const { count } = await supabase
-    .from('tap_events')
-    .select('*', { count: 'exact', head: true })
-    .eq('nfc_item_id', nfcItem.id)
-    .eq('ip_hash', ipHash)
-    .gte('created_at', fiveMinutesAgo)
-
-  if (!count) {
-    await supabase.from('tap_events').insert({
-      nfc_item_id: nfcItem.id,
-      device_type: deviceType,
-      referrer: referer,
-      ip_hash: ipHash,
-    })
+  const { profile: resolved, supabase } = await publicProfile(slug, await headers(), 'profile_view')
+  if (!resolved) {
+    const item = checked(await supabase.from('nfc_items').select('id').eq('slug', slug).maybeSingle())
+    if (!item) notFound()
+    return <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center text-white" style={{ background: defaultBackground }}>
+      <CreditCard size={48} className="text-white/50" aria-hidden="true" />
+      <h1 className="mt-5 text-xl font-semibold">This profile is not available</h1>
+      <p className="mt-2 max-w-sm text-sm text-white/70">The owner may still be setting up their profile, or this item has been paused.</p>
+    </main>
   }
-
-  // Step 3 — fetch profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, title, bio, photo_url, links, show_save_contact, background')
-    .eq('user_id', nfcItem.owner_id)
-    .single()
-
-  if (!profile) return <InactiveCard message="This profile hasn't been set up yet." />
-
-  return <ActiveProfile profile={profile} ownerId={nfcItem.owner_id} />
+  const profile = resolved.content
+  const background = profile.background || defaultBackground
+  const light = isLight(background)
+  const text = light ? 'text-gray-900' : 'text-white'
+  const muted = light ? 'text-gray-600' : 'text-white/75'
+  return <main className={`min-h-screen px-5 py-12 ${text}`} style={{ background }}>
+    <div className="mx-auto max-w-sm">
+      <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-amber-500 text-3xl font-semibold text-gray-900">
+        {profile.photo_asset_id ? (
+          // Protected image responses intentionally bypass the public image optimizer cache.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/api/public/photo/${encodeURIComponent(slug)}`} alt={`${profile.name}'s profile photo`} width={96} height={96} className="h-full w-full object-cover" />
+        ) : profile.name?.[0]?.toUpperCase()}
+      </div>
+      <header className="text-center">
+        <h1 className="break-words text-2xl font-bold">{profile.name}</h1>
+        {profile.title && <p className={`mt-1 break-words text-sm font-medium ${muted}`}>{profile.title}</p>}
+        {profile.bio && <p className={`mt-3 whitespace-pre-line break-words text-sm leading-relaxed ${muted}`}>{profile.bio}</p>}
+      </header>
+      <div className="mt-7 flex flex-col gap-3">{(profile.links || []).map((link, index) => {
+        const href = linkDestination(link)
+        if (!href) return null
+        const Icon = icons[link.type] || Link2
+        const native = ['phone', 'email'].includes(link.type)
+        return <a key={link.id || index} href={href} target={native ? undefined : '_blank'} rel="noopener noreferrer" referrerPolicy="no-referrer"
+          className="flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400"
+          style={{ background: light ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.12)', borderColor: light ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.2)' }}>
+          <Icon size={18} aria-hidden="true" /><span className="min-w-0 flex-1 truncate">{link.label || labels[link.type]}</span><ExternalLink size={14} aria-hidden="true" />
+        </a>
+      })}</div>
+      {profile.show_save_contact && <a href={`/api/vcard?slug=${encodeURIComponent(slug)}`} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400">
+        <UserPlus size={17} aria-hidden="true" />Save Contact</a>}
+      <footer className={`mt-10 text-center text-xs ${muted}`}><a href={appOrigin()}>Powered by Beem Hive</a></footer>
+    </div>
+  </main>
 }

@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# Local agent tooling and test artifacts
+.agents/
+skills-lock.json
+test-results/
+playwright-report/
+tests/admin-ui-results/
+**/.next-admin-ui/
 
 # vercel
 .vercel

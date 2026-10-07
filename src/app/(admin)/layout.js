@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { adminRequest } from '@/components/admin/admin-api'
+import { Button } from '@/components/ui/button'
+import { Notice } from '@/components/admin/admin-controls'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import Sidebar from '@/components/admin/sidebar'
 import Header from '@/components/admin/header'
@@ -13,38 +15,38 @@ export default function AdminLayout({ children }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
+  const mobileTriggerRef = useRef(null)
 
   useEffect(() => {
-    const collapsed = localStorage.getItem('beem_sidebar_collapsed')
-    if (collapsed !== null) setIsCollapsed(collapsed === 'true')
-
-    const supabase = createClient()
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        router.push('/login')
+    const controller = new AbortController()
+    adminRequest('/api/auth/session', { signal: controller.signal }).then(data => {
+      if (controller.signal.aborted) return
+      if (!data.user) {
+        router.replace('/login')
         return
       }
-
-      const { data: roleData } = await supabase
-        .from('users_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single()
-
-      if (roleData?.role !== 'admin') {
-        router.push('/customer/profile')
+      if (data.role !== 'admin') {
+        router.replace('/customer/profile')
         return
       }
-
-      setUserEmail(session.user.email ?? '')
+      try { setIsCollapsed(localStorage.getItem('beem_sidebar_collapsed') === 'true') } catch { /* Preferences are optional. */ }
+      setUserEmail(data.user.email ?? '')
+      setError('')
       setIsLoading(false)
-    }).catch(() => router.push('/login'))
-  }, [])
+    }).catch(error => {
+      if (controller.signal.aborted) return
+      if (error.status === 401) router.replace('/login')
+      else { setError(error.message); setIsLoading(false) }
+    })
+    return () => controller.abort()
+  }, [router, retry])
 
   function handleToggleCollapse() {
     setIsCollapsed(prev => {
       const next = !prev
-      localStorage.setItem('beem_sidebar_collapsed', String(next))
+      try { localStorage.setItem('beem_sidebar_collapsed', String(next)) } catch { /* Preferences are optional. */ }
       return next
     })
   }
@@ -52,10 +54,12 @@ export default function AdminLayout({ children }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <p role="status" className="text-sm text-gray-500">Checking admin access…</p>
       </div>
     )
   }
+
+  if (error) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6"><Notice error={error} /><Button onClick={() => { setIsLoading(true); setError(''); setRetry(value => value + 1) }}>Retry admin access</Button></div>
 
   return (
     <TooltipProvider>
@@ -66,11 +70,14 @@ export default function AdminLayout({ children }) {
           onToggleCollapse={handleToggleCollapse}
           onCloseMobile={() => setIsMobileOpen(false)}
           userEmail={userEmail}
+          mobileTriggerRef={mobileTriggerRef}
         />
         <div className="flex flex-col flex-1 overflow-hidden min-w-0">
           <Header
             onOpenMobile={() => setIsMobileOpen(true)}
             userEmail={userEmail}
+            mobileTriggerRef={mobileTriggerRef}
+            isMobileOpen={isMobileOpen}
           />
           <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-4 md:p-6">
             {children}

@@ -1,39 +1,43 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '../lib/supabase/middleware';
+import { NextResponse } from 'next/server'
+import { createClient } from './lib/supabase/middleware'
+import { createServiceClient } from './lib/supabase/server'
+import { resolveAccount } from './lib/auth'
 
 export async function proxy(request) {
-  const { supabase, response } = createClient(request);
-  const { data: { user } } = await supabase.auth.getUser();
+  if (request.nextUrl.pathname.startsWith('/t/')) {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-beem-request-method', request.method)
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    response.headers.set('Cache-Control', 'private, no-store')
+    return response
+  }
+  const bridge = createClient(request)
+  const { data, error } = await bridge.supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
+  const requiredRole = pathname === '/admin' || pathname.startsWith('/admin/') ? 'admin'
+    : pathname === '/customer' || pathname.startsWith('/customer/') ? 'customer' : null
+  if (!requiredRole) return bridge.response
 
-  const { pathname } = request.nextUrl;
-  const isAdminRoute = pathname.startsWith('/admin');
-  const isCustomerRoute = pathname.startsWith('/customer');
-
-  if (!isAdminRoute && !isCustomerRoute) return response;
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  function redirect(path, code) {
+    const url = new URL(path, request.url)
+    if (code) url.searchParams.set('error', code)
+    if (path === '/login' && !code) url.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+    return bridge.applyTo(NextResponse.redirect(url))
   }
 
-  const { data: roleRow } = await supabase
-    .from('users_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single();
-
-  const role = roleRow?.role;
-
-  if (isAdminRoute && role !== 'admin') {
-    return NextResponse.redirect(new URL('/customer/profile', request.url));
+  if (error || !data?.user) return redirect('/login', error?.status >= 500 ? 'auth_unavailable' : undefined)
+  try {
+    const { role } = await resolveAccount(createServiceClient(), data.user)
+    if (role !== requiredRole) return redirect(role === 'admin' ? '/admin/nfc-items' : '/customer/profile')
+  } catch (failure) {
+    if (failure.code === 'account_inactive' || failure.code === 'invalid_role') {
+      try { await bridge.supabase.auth.signOut({ scope: 'local' }) } catch { /* Preserve the account denial. */ }
+    }
+    return redirect('/login', failure.code || 'account_unavailable')
   }
-
-  if (isCustomerRoute && role !== 'customer') {
-    return NextResponse.redirect(new URL('/admin/nfc-items', request.url));
-  }
-
-  return response;
+  return bridge.response
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-};
+  matcher: ['/admin/:path*', '/customer/:path*', '/login', '/invite', '/forgot-password', '/reset-password', '/auth/:path*', '/t/:path*'],
+}

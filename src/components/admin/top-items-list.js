@@ -8,7 +8,7 @@ const TYPE_LABELS = {
   round_tag: 'Round Tag',
 }
 
-export default function TopItemsList({ items, loading }) {
+export default function TopItemsList({ items, loading, period = 'Selected period' }) {
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
@@ -35,7 +35,7 @@ export default function TopItemsList({ items, loading }) {
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Top NFC items</p>
-        <span className="text-xs text-gray-400 dark:text-gray-500">All time</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{period}</span>
       </div>
 
       {items.length === 0 ? (
@@ -45,7 +45,7 @@ export default function TopItemsList({ items, loading }) {
           {items.map((item, i) => {
             const pct = topCount > 0 ? (item.tap_count / topCount) * 100 : 0
             return (
-              <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+              <div key={item.assignment_id || item.id || `${item.slug}-${i}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                 {/* Rank */}
                 <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 font-medium shrink-0">
                   {i + 1}
@@ -78,7 +78,7 @@ export default function TopItemsList({ items, loading }) {
 
                 {/* Tap count */}
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 tabular-nums shrink-0">
-                  {(item.tap_count ?? 0).toLocaleString()}
+                  {item.tap_count?.toLocaleString() ?? '—'}
                 </span>
               </div>
             )

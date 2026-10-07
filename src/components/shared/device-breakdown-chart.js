@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 
-export default function DeviceBreakdownChart({ mobile, desktop, loading, isDark }) {
+export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet = 0, unknown = 0, loading, isDark }) {
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
@@ -13,12 +13,14 @@ export default function DeviceBreakdownChart({ mobile, desktop, loading, isDark 
     )
   }
 
-  const total = mobile + desktop
+  const total = mobile + desktop + tablet + unknown
   const data = [
     { name: 'Mobile', value: mobile },
     { name: 'Desktop', value: desktop },
+    { name: 'Tablet', value: tablet },
+    { name: 'Unknown', value: unknown },
   ]
-  const colors = ['#f59e0b', isDark ? '#451a03' : '#fef3c7']
+  const colors = ['#f59e0b', isDark ? '#78350f' : '#fcd34d', '#9ca3af', '#6b7280']
 
   if (total === 0) {
     return (

@@ -5,6 +5,7 @@ import {
   closestCenter,
   PointerSensor,
   TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -12,6 +13,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
   arrayMove,
+  sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import {
   Globe, AtSign, Share2, Briefcase, MessageCircle, Phone, Mail, Link2, Plus,
@@ -34,12 +36,13 @@ const MAX_LINKS = 8
 
 export default function LinksEditor({ links, onChange, disabled }) {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   )
 
   function handleDragEnd({ active, over }) {
-    if (!over || active.id === over.id) return
+    if (disabled || !over || active.id === over.id) return
     const oldIndex = links.findIndex(l => l.id === active.id)
     const newIndex = links.findIndex(l => l.id === over.id)
     onChange(arrayMove(links, oldIndex, newIndex))

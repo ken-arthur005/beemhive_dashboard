@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { useTheme } from 'next-themes'
 import { Menu, Sun, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,8 +21,11 @@ export default function CustomerHeader({ onOpenMobile, userEmail }) {
   const pageTitle = PAGE_TITLES[pathname] ?? 'Dashboard'
 
   const avatarEl = profile.photo_url ? (
-    <img
+    <Image
       src={profile.photo_url}
+      width={28}
+      height={28}
+      unoptimized
       alt="Profile"
       className="w-7 h-7 rounded-full object-cover cursor-pointer"
     />

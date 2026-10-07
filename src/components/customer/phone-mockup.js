@@ -1,12 +1,14 @@
 'use client'
 
 import { LINK_TYPES } from './profile-editor/links-editor'
+import Image from 'next/image'
+import { itemUrl } from '@/lib/platform'
 
 const DEFAULT_BG = 'linear-gradient(135deg, #0f172a, #1e293b)'
 
 function resolveTheme(background) {
   const bg = background || DEFAULT_BG
-  const isLight = /([#]([fFdDeE])|white|light)/i.test(bg)
+  const isLight = /^(white|#fff(?:fff)?|#fafafa|#f3f4f6)$/i.test(bg.trim())
   return {
     bg,
     nameClass: isLight ? 'text-gray-900' : 'text-white',
@@ -23,12 +25,23 @@ function resolveTheme(background) {
 function LinkButton({ link, linkClass, linkBg, linkBorder, iconClass }) {
   const typeConfig = LINK_TYPES.find(t => t.value === link.type) ?? LINK_TYPES[0]
   const Icon = typeConfig.Icon
-  const label = link.url || typeConfig.placeholder
+  const label = link.url || 'Empty link'
+  let href = null
+  if (link.type === 'phone' && /^\+?[\d\s().-]+$/.test(link.url)) href = `tel:${link.url.replace(/[\s().-]/g, '')}`
+  else if (link.type === 'email' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(link.url)) href = `mailto:${link.url}`
+  else {
+    try {
+      const url = new URL(link.url)
+      if (['https:', 'http:'].includes(url.protocol)) href = url.href
+    } catch { /* Incomplete links remain visible in the private preview. */ }
+  }
 
   return (
     <a
-      href={link.url || '#'}
-      onClick={e => e.preventDefault()}
+      href={href ?? undefined}
+      aria-disabled={!href}
+      target={href?.startsWith('http') ? '_blank' : undefined}
+      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
       className={`flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 text-sm transition-colors ${linkClass}`}
       style={{ background: linkBg, border: linkBorder }}
     >
@@ -67,7 +80,7 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
         <div className="h-9 bg-gray-100 border-b border-gray-200 flex items-center justify-center gap-1.5 shrink-0 px-3">
           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
           <span className="text-[11px] text-gray-500 truncate">
-            beemhive.com/t/{slug ?? '...'}
+            {slug ? itemUrl(slug) : 'Private draft · no NFC item assigned'}
           </span>
         </div>
 
@@ -76,8 +89,11 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
           {/* Avatar */}
           <div className="flex flex-col items-center gap-2">
             {photoUrl ? (
-              <img
+              <Image
                 src={photoUrl}
+                width={64}
+                height={64}
+                unoptimized
                 alt="Profile"
                 className="w-16 h-16 rounded-full object-cover"
               />
@@ -89,9 +105,9 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
             {name && (
               <div className="text-center">
                 <p className={`text-sm font-bold ${nameClass}`}>{name}</p>
-                {title && <p className={`text-xs mt-0.5 ${mutedClass}`}>{title}</p>}
               </div>
             )}
+            {title && <p className={`text-xs text-center ${mutedClass}`}>{title}</p>}
             {bio && (
               <p className={`text-xs text-center leading-relaxed ${bodyClass}`}>{bio}</p>
             )}
@@ -108,8 +124,8 @@ export default function PhoneMockup({ slug, name, title, bio, links, showSaveCon
 
           {/* Save contact */}
           {showSaveContact && (
-            <button className="w-full rounded-lg bg-amber-500 text-gray-900 text-xs font-medium py-2.5 text-center">
-              Save Contact
+            <button disabled className="w-full rounded-lg bg-amber-500 text-gray-900 text-xs font-medium py-2.5 text-center" title="Contact download is available only from the published public profile">
+              Save Contact · preview only
             </button>
           )}
 

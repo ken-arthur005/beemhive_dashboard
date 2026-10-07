@@ -10,8 +10,8 @@ export default function PasswordStrength({ password }) {
   if (!password.length) return null
   const { label, color, width } = getStrength(password)
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+    <div className="mt-2 flex items-center gap-2" role="status" aria-live="polite" aria-label={`Password strength: ${label}. This is an estimate, not a guarantee.`}>
+      <div className="flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden" aria-hidden="true">
         <div
           className={`h-full rounded-full transition-all duration-300 ${color}`}
           style={{ width }}

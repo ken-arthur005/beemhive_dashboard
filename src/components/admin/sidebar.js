@@ -2,8 +2,10 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { Dialog } from '@base-ui/react/dialog'
 import { usePathname, useRouter } from 'next/navigation'
-import { CreditCard, Users, BarChart2, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { CreditCard, Users, BarChart2, ChevronLeft, ChevronRight, LogOut, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -28,7 +30,7 @@ function NavItem({ item, isCollapsed, onClick }) {
 
   if (!isCollapsed) {
     return (
-      <Link href={item.href} onClick={onClick} className={linkClass}>
+      <Link href={item.href} aria-current={isActive ? 'page' : undefined} onClick={onClick} className={linkClass}>
         <Icon size={18} className="shrink-0" />
         <span>{item.label}</span>
       </Link>
@@ -39,7 +41,7 @@ function NavItem({ item, isCollapsed, onClick }) {
     <Tooltip>
       <TooltipTrigger
         render={
-          <Link href={item.href} onClick={onClick} className={linkClass} />
+          <Link href={item.href} aria-label={item.label} title={item.label} aria-current={isActive ? 'page' : undefined} onClick={onClick} className={linkClass} />
         }
       >
         <Icon size={18} className="shrink-0" />
@@ -49,8 +51,16 @@ function NavItem({ item, isCollapsed, onClick }) {
   )
 }
 
-export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile, userEmail }) {
+export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile, userEmail, mobileTriggerRef }) {
   const router = useRouter()
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const closeOnDesktop = () => { if (media.matches && isMobileOpen) onCloseMobile() }
+    media.addEventListener('change', closeOnDesktop)
+    closeOnDesktop()
+    return () => media.removeEventListener('change', closeOnDesktop)
+  }, [isMobileOpen, onCloseMobile])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -66,29 +76,35 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
     </div>
   )
 
-  const sidebarContent = (
-    <div className={`flex flex-col h-full bg-[#111827] border-r border-white/10 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-60'}`}>
+  function sidebarContent(collapsed, mobile = false) {
+    return (
+    <div className={`flex flex-col h-full bg-[#111827] border-r border-white/10 transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center gap-3 px-3 py-4 border-b border-white/10 ${isCollapsed ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-3 px-3 py-4 border-b border-white/10 ${collapsed ? 'justify-center' : ''}`}>
         <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
-        {!isCollapsed && (
+        {!collapsed && (
           <>
             <span className="text-white font-semibold text-sm flex-1">Beem Hive</span>
             <button
-              onClick={onToggleCollapse}
+              type="button"
+              onClick={mobile ? onCloseMobile : onToggleCollapse}
               className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-              title="Collapse sidebar"
+              aria-label={mobile ? 'Close navigation' : 'Collapse sidebar'}
+              title={mobile ? 'Close navigation' : 'Collapse sidebar'}
             >
-              <ChevronLeft size={16} />
+              {mobile ? <X size={16} /> : <ChevronLeft size={16} />}
             </button>
           </>
         )}
-        {isCollapsed && (
+        {collapsed && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   onClick={onToggleCollapse}
+                  type="button"
+                  aria-label="Expand sidebar"
+                  title="Expand sidebar"
                   className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 />
               }
@@ -101,20 +117,20 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 flex flex-col gap-1 p-2 overflow-y-auto">
+      <nav aria-label="Admin navigation" className="flex-1 flex flex-col gap-1 p-2 overflow-y-auto">
         {NAV_ITEMS.map(item => (
           <NavItem
             key={item.href}
             item={item}
-            isCollapsed={isCollapsed}
+            isCollapsed={collapsed}
             onClick={onCloseMobile}
           />
         ))}
       </nav>
 
       {/* User info + sign out */}
-      <div className={`flex items-center gap-2 px-3 py-3 border-t border-white/10 ${isCollapsed ? 'flex-col justify-center' : ''}`}>
-        {isCollapsed ? (
+      <div className={`flex items-center gap-2 px-3 py-3 border-t border-white/10 ${collapsed ? 'flex-col justify-center' : ''}`}>
+        {collapsed ? (
           <Tooltip>
             <TooltipTrigger render={<div className="cursor-default" />}>
               {avatarEl}
@@ -132,6 +148,9 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
                 render={
                   <button
                     onClick={handleSignOut}
+                    type="button"
+                    aria-label="Sign out"
+                    title="Sign out"
                     className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
                   />
                 }
@@ -142,12 +161,15 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
             </Tooltip>
           </>
         )}
-        {isCollapsed && (
+        {collapsed && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   onClick={handleSignOut}
+                  type="button"
+                  aria-label="Sign out"
+                  title="Sign out"
                   className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                 />
               }
@@ -159,27 +181,27 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
         )}
       </div>
     </div>
-  )
+    )
+  }
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex h-screen sticky top-0 shrink-0">
-        {sidebarContent}
+        {sidebarContent(isCollapsed)}
       </aside>
 
       {/* Mobile drawer */}
-      {isMobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={onCloseMobile}
-          />
-          <aside className="relative flex h-full z-50">
-            {sidebarContent}
-          </aside>
-        </div>
-      )}
+      <Dialog.Root open={isMobileOpen} onOpenChange={open => { if (!open) onCloseMobile() }}>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Popup finalFocus={mobileTriggerRef} className="fixed inset-y-0 left-0 z-50 h-dvh outline-none">
+            <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
+            <Dialog.Description className="sr-only">Navigate between NFC items, customers and analytics.</Dialog.Description>
+            {sidebarContent(false, true)}
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   )
 }

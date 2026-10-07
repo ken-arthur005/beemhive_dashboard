@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { CreditCard } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { customerRequest, useCustomerProfile } from '@/components/customer/customer-profile-context'
 import { Skeleton } from '@/components/ui/skeleton'
 import NfcCardItem from '@/components/customer/nfc-card-item'
 
@@ -30,26 +30,25 @@ function SkeletonCard() {
 }
 
 export default function MyCardsPage() {
-  const supabase = createClient()
+  const { account } = useCustomerProfile()
   const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-
-      const { data } = await supabase
-        .from('nfc_items')
-        .select('*, tap_events(created_at)')
-        .eq('owner_id', session.user.id)
-        .order('created_at', { ascending: false })
-
-      setItems(data ?? [])
-      setIsLoading(false)
+      try {
+        const data = await customerRequest('/api/customer/items', { signal: controller.signal })
+        if (!cancelled) { setItems(data.items); setError(null) }
+      } catch (failure) { if (!cancelled) setError(failure.message) }
+      finally { if (!cancelled) setIsLoading(false) }
     }
     load()
-  }, [])
+    return () => { cancelled = true; controller.abort() }
+  }, [attempt])
 
   return (
     <div className="space-y-6">
@@ -73,7 +72,7 @@ export default function MyCardsPage() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {error ? <div role="alert" className="text-sm text-rose-600"><p>{error}</p><button className="mt-2 underline" onClick={() => { setIsLoading(true); setAttempt(value => value + 1) }}>Try again</button></div> : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <SkeletonCard />
           <SkeletonCard />
@@ -83,13 +82,13 @@ export default function MyCardsPage() {
           <CreditCard size={80} className="text-gray-300 dark:text-gray-700" />
           <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300">No cards yet</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-sm">
-            Your NFC cards will appear here once they've been set up by Beem Hive.
+            Your NFC cards will appear here once they&apos;ve been set up by Beem Hive.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {items.map(item => (
-            <NfcCardItem key={item.id} item={item} />
+            <NfcCardItem key={item.id} item={item} account={account} />
           ))}
         </div>
       )}

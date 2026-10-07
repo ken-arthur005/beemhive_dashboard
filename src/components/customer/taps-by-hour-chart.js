@@ -21,13 +21,13 @@ export default function TapsByHourChart({ data, loading, isDark }) {
     )
   }
 
-  const currentHour = new Date().getHours()
+  const currentHour = new Date().getUTCHours()
   const axisColor = isDark ? '#6b7280' : '#9ca3af'
   const gridColor = isDark ? '#1f2937' : '#f3f4f6'
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Taps by time of day</p>
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Profile views by time of day · UTC</p>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
           <CartesianGrid vertical={false} stroke={gridColor} />

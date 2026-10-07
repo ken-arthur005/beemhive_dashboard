@@ -1,100 +1,66 @@
-import { createClient } from '@/lib/supabase/server'
-import { createBrowserClient } from '@supabase/ssr'
-
-function anonClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
-}
-
-async function validateAdmin(request) {
-  const auth = request.headers.get('Authorization') ?? ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null
-  if (!token) return null
-
-  const { data: { user }, error } = await anonClient().auth.getUser(token)
-  if (error || !user) return null
-
-  const supabase = await createClient()
-  const { data: roleData } = await supabase
-    .from('users_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single()
-
-  return roleData?.role === 'admin' ? supabase : null
-}
+import { requireUser } from '@/lib/auth'
+import { createTokenClient } from '@/lib/supabase/server'
+import { apiError, HttpError, jsonResponse, readJson } from '@/lib/http'
+import { checked, uuid, authDirectory } from '@/lib/data'
+import { appOrigin, itemUrl } from '@/lib/platform'
 
 export async function POST(request) {
+  let operation
+  let service
   try {
-    const supabase = await validateAdmin(request)
-    if (!supabase) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const body = await request.json()
-    const { mode, email, customerName, productType, slug } = body
-
-    if (mode === 'resend') {
-      if (!email) return Response.json({ error: 'Email required' }, { status: 400 })
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${appUrl}/auth/callback?next=/invite`,
-      })
-      if (error) return Response.json({ error: error.message }, { status: 500 })
-      return Response.json({ success: true })
+    const { user, supabase } = await requireUser(request, { role: 'admin' })
+    service = supabase
+    const body = await readJson(request)
+    if (body.mode === 'resend') {
+      const id = uuid(body.userId)
+      checked(await supabase.rpc('claim_setup_email', { p_actor: user.id, p_user: id }))
+      const target = checked(await supabase.auth.admin.getUserById(id)).user
+      const result = await createTokenClient().auth.resetPasswordForEmail(target.email, { redirectTo: `${appOrigin()}/auth/confirm?type=recovery` })
+      if (result.error) throw new HttpError(result.error.status === 429 ? 429 : 503, 'The setup email could not be sent. Please retry later.')
+      return jsonResponse({ success: true })
     }
-
-    if (!email || !customerName || !productType || !slug) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 })
+    const id = uuid(body.operationKey, 'Operation')
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const name = typeof body.customerName === 'string' ? body.customerName.trim() : ''
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || name.length < 2 || name.length > 120 ||
+      !['card', 'stand', 'round_tag'].includes(body.productType) || !/^[a-z0-9][a-z0-9-]{2,63}$/.test(body.slug || '')) {
+      throw new HttpError(400, 'Provide a valid name, email, product type and lowercase slug.')
     }
-
-    const { data: existing } = await supabase
-      .from('nfc_items')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle()
-
-    if (existing) return Response.json({ error: 'slug_taken' }, { status: 409 })
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-
-    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      email,
-      {
-        data: { full_name: customerName },
-        redirectTo: `${appUrl}/auth/callback?next=/invite`,
+    operation = checked(await supabase.rpc('claim_provisioning', { p_id: id, p_email: email, p_name: name,
+      p_product_type: body.productType, p_slug: body.slug }))
+    if (operation.status === 'completed') {
+      const item = checked(await supabase.from('nfc_items').select('*').eq('operation_key', id).single())
+      return jsonResponse({ item: { ...item, ownerEmail: email, url: itemUrl(item.slug) }, operationId: id })
+    }
+    let userId = operation.user_id
+    if (!userId) {
+      const existing = (await authDirectory(supabase)).find(account => account.email?.toLowerCase() === email)
+      if (existing) {
+        // Reconcile an ambiguous earlier invite, but never reinterpret an old
+        // account as a new customer or overwrite its role/profile.
+        if (Date.parse(existing.created_at) < Date.parse(operation.created_at) - 5000) throw new HttpError(409, 'This account already exists. Choose “Existing customer” to assign another item.', 'existing_customer')
+        userId = existing.id
+      } else {
+        const invited = await supabase.auth.admin.inviteUserByEmail(email, { data: { full_name: name },
+          redirectTo: `${appOrigin()}/auth/confirm?type=invite` })
+        if (invited.error || !invited.data?.user?.id) throw new HttpError(invited.error?.status === 429 ? 429 : 503,
+          'The invitation could not be confirmed. Retry this operation; existing records will be reconciled.', 'invite_retry')
+        userId = invited.data.user.id
       }
-    )
-    if (inviteError) {
-      const status = inviteError.status === 429 ? 429 : 500
-      return Response.json({ error: inviteError.message, code: inviteError.code }, { status })
+      checked(await supabase.from('provisioning_operations').update({ user_id: userId, status: 'invited' }).eq('id', id))
     }
-
-    const userId = inviteData?.user?.id
-    if (!userId) return Response.json({ error: 'Invite succeeded but user ID was missing in response' }, { status: 500 })
-
-    const { data: nfcItem, error: nfcError } = await supabase
-      .from('nfc_items')
-      .insert({ slug, product_type: productType, owner_id: userId, is_active: true })
-      .select()
-      .single()
-
-    if (nfcError) {
-      console.error('[invite] nfc_items insert error:', nfcError)
-      return Response.json({ error: nfcError.message }, { status: 500 })
+    checked(await supabase.rpc('ensure_customer', { p_user_id: userId, p_name: name }))
+    const item = checked(await supabase.rpc('create_nfc_item', { p_actor: user.id, p_owner: userId, p_slug: body.slug,
+      p_product_type: body.productType, p_operation_key: id }))
+    checked(await supabase.from('provisioning_operations').update({ status: 'completed', lease_until: null,
+      last_error: null, updated_at: new Date().toISOString() }).eq('id', id))
+    return jsonResponse({ item: { ...item, ownerEmail: email, tapCount: 0, url: itemUrl(item.slug) }, operationId: id }, 201)
+  } catch (error) {
+    if (operation && operation.status !== 'completed' && service) {
+      await service.from('provisioning_operations').update({ status: 'failed', lease_until: null,
+        last_error: 'Provisioning requires reconciliation and retry.', updated_at: new Date().toISOString() }).eq('id', operation.id)
     }
-
-    const { error: profileError } = await supabase.from('profiles').insert({ user_id: userId, name: customerName })
-    if (profileError) console.error('[invite] profiles insert error:', profileError)
-
-    const { error: roleError } = await supabase.from('users_roles').insert({ user_id: userId, role: 'customer' })
-    if (roleError) console.error('[invite] users_roles insert error:', roleError)
-
-    return Response.json({
-      item: { ...nfcItem, ownerEmail: email, tapCount: 0 },
-    })
-  } catch (err) {
-    console.error('[invite] unhandled exception:', err)
-    return Response.json({ error: 'Internal server error', detail: err?.message }, { status: 500 })
+    if (error?.message?.includes('email_rate_limit')) return jsonResponse({ error: 'Wait one minute before sending another setup email.', code: 'email_rate_limit' }, 429)
+    return apiError(error)
   }
 }

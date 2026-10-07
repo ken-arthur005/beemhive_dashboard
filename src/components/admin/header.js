@@ -12,7 +12,7 @@ const PAGE_TITLES = {
   '/admin/analytics': 'Analytics',
 }
 
-export default function Header({ onOpenMobile, userEmail }) {
+export default function Header({ onOpenMobile, userEmail, mobileTriggerRef, isMobileOpen }) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const pageTitle = PAGE_TITLES[pathname] ?? 'Admin'
@@ -22,8 +22,13 @@ export default function Header({ onOpenMobile, userEmail }) {
     <header className="h-14 flex items-center px-4 gap-3 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 shrink-0">
       {/* Mobile hamburger */}
       <button
+        ref={mobileTriggerRef}
+        type="button"
         onClick={onOpenMobile}
         aria-label="Open navigation"
+        title="Open navigation"
+        aria-haspopup="dialog"
+        aria-expanded={isMobileOpen}
         className="md:hidden p-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <Menu size={20} />
@@ -50,7 +55,7 @@ export default function Header({ onOpenMobile, userEmail }) {
         <Separator orientation="vertical" className="h-6 bg-gray-200 dark:bg-gray-700" />
 
         {/* Admin avatar — TODO: profile dropdown */}
-        <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium cursor-pointer">
+        <div aria-label={`Signed in as ${userEmail}`} className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium">
           {userInitial}
         </div>
       </div>

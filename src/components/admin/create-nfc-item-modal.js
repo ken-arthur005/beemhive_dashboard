@@ -1,353 +1,151 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Shuffle, Copy, Check } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+import { useEffect, useRef, useState } from 'react'
+import { Shuffle, Copy } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { itemUrl } from '@/lib/platform'
+import CustomerSelector from './customer-selector'
+import { adminRequest } from './admin-api'
+import { inputClass, primaryClass, Notice } from './admin-controls'
 
-const EMPTY_FIELDS = { customerName: '', customerEmail: '', confirmEmail: '', productType: '', slug: '' }
-const EMPTY_TOUCHED = { customerName: false, customerEmail: false, confirmEmail: false, productType: false, slug: false }
-
-function validate(fields, touched) {
-  const errors = {}
-  if (touched.customerName) {
-    if (!fields.customerName) errors.customerName = 'Name is required'
-    else if (fields.customerName.length < 2) errors.customerName = 'Name must be at least 2 characters'
-  }
-  if (touched.customerEmail) {
-    if (!fields.customerEmail) errors.customerEmail = 'Email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.customerEmail)) errors.customerEmail = 'Enter a valid email address'
-  }
-  if (touched.productType && !fields.productType) {
-    errors.productType = 'Select a product type'
-  }
-  if (touched.slug) {
-    if (!fields.slug) errors.slug = 'Slug is required'
-    else if (fields.slug.length < 3) errors.slug = 'Slug must be at least 3 characters'
-    else if (fields.slug.length > 30) errors.slug = 'Slug must be 30 characters or less'
-    else if (!/^[a-z0-9-]+$/.test(fields.slug)) errors.slug = 'Only lowercase letters, numbers, and hyphens'
-    else if (fields.slug.startsWith('-') || fields.slug.endsWith('-')) errors.slug = 'Cannot start or end with a hyphen'
-  }
-  return errors
-}
-
-function mapApiError(err, code) {
-  if (!err) return 'Something went wrong. Please try again.'
-  if (err === 'slug_taken') return 'This slug is already taken — try another.'
-  if (code === 'over_email_send_rate_limit') return 'Email rate limit reached. Wait a few minutes and try again.'
-  if (err.includes('already registered') || err.includes('already been registered')) return 'This email is already registered.'
-  return 'Something went wrong. Please try again.'
-}
+const STORAGE_KEY = 'beem_admin_pending_creation_v1'
+const emptyFields = { customerName: '', email: '', confirmEmail: '', productType: 'card', slug: '' }
 
 export default function CreateNfcItemModal({ open, onOpenChange, onCreated }) {
-  const [step, setStep] = useState('form')
-  const [fields, setFields] = useState(EMPTY_FIELDS)
-  const [touched, setTouched] = useState(EMPTY_TOUCHED)
+  const [mode, setMode] = useState('existing')
+  const [customer, setCustomer] = useState(null)
+  const [fields, setFields] = useState(emptyFields)
+  const [pending, setPending] = useState(null)
+  const operationRef = useRef(null)
+  const busyRef = useRef(false)
   const [submitting, setSubmitting] = useState(false)
-  const [errorBanner, setErrorBanner] = useState(null)
-  const [slugFieldError, setSlugFieldError] = useState(null)
-  const [urlCopied, setUrlCopied] = useState(false)
-  const [createdSlug, setCreatedSlug] = useState('')
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+  const [created, setCreated] = useState(null)
 
-  const errors = validate(fields, touched)
-  const confirmMismatch =
-    fields.confirmEmail.length > 0 &&
-    fields.customerEmail.toLowerCase() !== fields.confirmEmail.toLowerCase()
-
-  function setField(name, value) {
-    setFields(prev => {
-      const next = { ...prev, [name]: value }
-      if (name === 'customerEmail' && prev.confirmEmail !== '') {
-        next.confirmEmail = ''
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+        if (saved?.body?.operationKey && ['existing', 'invite'].includes(saved.mode)) {
+          operationRef.current = saved
+          setPending(saved)
+          setMode(saved.mode)
+          setFields({ ...emptyFields, ...saved.body, confirmEmail: saved.body.email || '' })
+          setCustomer(saved.customer || null)
+        }
+      } catch {
+        setError('The saved request could not be restored. Check existing items before creating another request.')
       }
-      return next
     })
-    if (name === 'customerEmail') {
-      setTouched(prev => ({ ...prev, confirmEmail: false }))
+    return () => { cancelled = true }
+  }, [open])
+
+  function update(name, value) {
+    setFields(previous => ({ ...previous, [name]: value }))
+  }
+
+  async function submit(event) {
+    event.preventDefault()
+    if (busyRef.current) return
+    if (!operationRef.current && mode === 'invite' && fields.email.toLowerCase() !== fields.confirmEmail.toLowerCase()) {
+      setError('The email addresses must match.')
+      return
     }
-  }
-
-  function touch(name) {
-    setTouched(prev => ({ ...prev, [name]: true }))
-  }
-
-  function generateSlug() {
-    const random = Math.random().toString(36).slice(2, 8)
-    setField('slug', random)
-    setTouched(prev => ({ ...prev, slug: true }))
-    setSlugFieldError(null)
-  }
-
-  const handleSlugChange = useCallback((e) => {
-    const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
-    setField('slug', sanitized)
-    setSlugFieldError(null)
-  }, [])
-
-  async function handleSubmit() {
-    const allTouched = { customerName: true, customerEmail: true, confirmEmail: true, productType: true, slug: true }
-    setTouched(allTouched)
-    const errs = validate(fields, allTouched)
-    if (Object.keys(errs).length > 0) return
-    if (fields.customerEmail.toLowerCase() !== fields.confirmEmail.toLowerCase()) return
-
+    if (!operationRef.current && mode === 'existing' && !customer) {
+      setError('Choose an existing customer.')
+      return
+    }
+    busyRef.current = true
     setSubmitting(true)
-    setErrorBanner(null)
-    setSlugFieldError(null)
-
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (!session) {
-      setErrorBanner('Your session has expired. Please refresh the page and try again.')
-      setSubmitting(false)
-      return
-    }
-
-    let res, json
+    setError('')
+    setMessage('')
     try {
-      res = await fetch('/api/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          email: fields.customerEmail,
-          customerName: fields.customerName,
-          productType: fields.productType,
-          slug: fields.slug,
-        }),
-      })
-      json = await res.json()
-    } catch {
-      setErrorBanner('Something went wrong. Please try again.')
-      setSubmitting(false)
-      return
-    }
-
-    if (!res.ok) {
-      if (res.status === 409 || json.error === 'slug_taken') {
-        setSlugFieldError('This slug is already taken — try another')
-      } else {
-        setErrorBanner(mapApiError(json.error, json.code))
+      let operation = operationRef.current
+      if (!operation) {
+        const body = { operationKey: crypto.randomUUID(), slug: fields.slug.trim(), productType: fields.productType }
+        if (mode === 'existing') body.ownerId = customer.user_id
+        else Object.assign(body, { email: fields.email.trim(), customerName: fields.customerName.trim() })
+        operation = { mode, body, customer }
+        // Persist before sending: an invite may provision a user before a response is lost.
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(operation))
+        operationRef.current = operation
+        setPending(operation)
       }
+      const data = await adminRequest(operation.mode === 'existing' ? '/api/admin/nfc-items' : '/api/invite', { method: 'POST', body: operation.body })
+      if (!data.item?.slug) throw new Error('Creation is not confirmed. Retry this saved request to confirm the result.')
+      localStorage.removeItem(STORAGE_KEY)
+      operationRef.current = null
+      setPending(null)
+      setCreated(data.item)
+      onCreated(data.item)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      busyRef.current = false
       setSubmitting(false)
-      return
-    }
-
-    setCreatedSlug(json.item.slug)
-    setStep('success')
-    setTimeout(() => {
-      onCreated(json.item)
-    }, 1500)
-  }
-
-  function handleOpenChange(isOpen) {
-    onOpenChange(isOpen)
-    if (!isOpen) {
-      setTimeout(() => {
-        setStep('form')
-        setFields(EMPTY_FIELDS)
-        setTouched(EMPTY_TOUCHED)
-        setSubmitting(false)
-        setErrorBanner(null)
-        setSlugFieldError(null)
-        setUrlCopied(false)
-        setCreatedSlug('')
-      }, 200)
     }
   }
 
-  function copyUrl() {
-    navigator.clipboard.writeText(`https://beemhive.com/t/${createdSlug}`)
-    setUrlCopied(true)
-    setTimeout(() => setUrlCopied(false), 1500)
+  function close(nextOpen) {
+    if (busyRef.current) return
+    onOpenChange(nextOpen)
+    if (!nextOpen && created) {
+      setCreated(null)
+      setFields(emptyFields)
+      setCustomer(null)
+      setError('')
+      setMessage('')
+    }
   }
 
-  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
-  const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
-  const errorClass = 'mt-1 text-xs text-rose-500'
+  async function copyUrl() {
+    try {
+      await navigator.clipboard.writeText(itemUrl(created.slug))
+      setMessage('Canonical URL copied.')
+    } catch { setError('Could not copy the URL. Select and copy it manually.') }
+  }
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md" showCloseButton={step === 'form'}>
-        {step === 'success' ? (
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-900/20">
-              <Check size={28} className="text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Item created successfully</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Invite sent to {fields.customerEmail}</p>
-            </div>
-            <div className="w-full">
-              <div className="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2">
-                <code className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">
-                  https://beemhive.com/t/{createdSlug}
-                </code>
-                <button
-                  onClick={copyUrl}
-                  className="shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                >
-                  {urlCopied ? <Check size={14} className="text-amber-600" /> : <Copy size={14} />}
-                </button>
-              </div>
-            </div>
-            <div className="w-full rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2.5 text-left">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Program the NFC card</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Open NFC Tools on your phone → tap <strong>Write</strong> → <strong>URL</strong> → paste the link above → tap your NFC card
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Create NFC Item</DialogTitle>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-4">
-              {/* Customer name */}
-              <div>
-                <label className={labelClass}>Customer name</label>
-                <input
-                  type="text"
-                  value={fields.customerName}
-                  onChange={e => setField('customerName', e.target.value)}
-                  onBlur={() => touch('customerName')}
-                  placeholder="e.g. Kofi Mensah"
-                  maxLength={100}
-                  disabled={submitting}
-                  className={inputClass}
-                />
-                {errors.customerName && <p className={errorClass}>{errors.customerName}</p>}
-              </div>
-
-              {/* Customer email */}
-              <div>
-                <label className={labelClass}>Customer email</label>
-                <input
-                  type="email"
-                  value={fields.customerEmail}
-                  onChange={e => setField('customerEmail', e.target.value)}
-                  onBlur={() => touch('customerEmail')}
-                  placeholder="kofi@example.com"
-                  disabled={submitting}
-                  className={inputClass}
-                />
-                {errors.customerEmail && <p className={errorClass}>{errors.customerEmail}</p>}
-              </div>
-
-              {/* Confirm customer email */}
-              <div>
-                <label className={labelClass}>Confirm customer email</label>
-                <input
-                  type="email"
-                  value={fields.confirmEmail}
-                  onChange={e => { setField('confirmEmail', e.target.value); touch('confirmEmail') }}
-                  onBlur={() => touch('confirmEmail')}
-                  placeholder="Re-enter email address"
-                  disabled={submitting}
-                  className={inputClass}
-                />
-                {confirmMismatch && (
-                  <p className={errorClass}>Email addresses don't match</p>
-                )}
-              </div>
-
-              {/* Product type */}
-              <div>
-                <label className={labelClass}>Product type</label>
-                <Select
-                  value={fields.productType}
-                  onValueChange={v => { setField('productType', v); touch('productType') }}
-                  disabled={submitting}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a type…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="stand">Stand</SelectItem>
-                    <SelectItem value="round_tag">Round Tag</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.productType && <p className={errorClass}>{errors.productType}</p>}
-              </div>
-
-              {/* Slug */}
-              <div>
-                <label className={labelClass}>Profile URL slug</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-1 items-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden focus-within:ring-2 focus-within:ring-amber-400 focus-within:border-transparent">
-                    <span className="pl-3 text-sm text-gray-400 dark:text-gray-500 shrink-0 select-none">beemhive.com/t/</span>
-                    <input
-                      type="text"
-                      value={fields.slug}
-                      onChange={handleSlugChange}
-                      onBlur={() => touch('slug')}
-                      placeholder="my-slug"
-                      disabled={submitting}
-                      className="flex-1 py-2 pr-3 text-sm text-gray-900 dark:text-gray-100 bg-transparent focus:outline-none disabled:opacity-50 min-w-0"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={generateSlug}
-                    disabled={submitting}
-                    title="Generate random slug"
-                    className="shrink-0 p-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-                  >
-                    <Shuffle size={15} />
-                  </button>
-                </div>
-                {fields.slug && (
-                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                    https://beemhive.com/t/{fields.slug}
-                  </p>
-                )}
-                {(errors.slug || slugFieldError) && (
-                  <p className={errorClass}>{slugFieldError || errors.slug}</p>
-                )}
-              </div>
-
-              {/* Error banner */}
-              {errorBanner && (
-                <div role="alert" className="rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 px-3 py-2">
-                  <p className="text-sm text-rose-600 dark:text-rose-400">{errorBanner}</p>
-                </div>
-              )}
-
-              {/* Submit */}
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors
-                  ${submitting
-                    ? 'bg-amber-300 text-gray-900 cursor-not-allowed'
-                    : 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-900'
-                  }`}
-              >
-                {submitting && (
-                  <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                )}
-                {submitting ? 'Creating…' : 'Create NFC Item'}
-              </button>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
+  const locked = submitting || !!pending
+  return <Dialog open={open} onOpenChange={close}>
+    <DialogContent className="sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto" showCloseButton={!submitting}>
+      <DialogHeader>
+        <DialogTitle>{created ? 'NFC item created' : 'Create NFC Item'}</DialogTitle>
+        <DialogDescription>{created ? 'The item URL is ready for programming. Public access requires an eligible owner and a published profile.' : 'Assign an existing customer or invite a new customer.'}</DialogDescription>
+      </DialogHeader>
+      {created ? <div className="space-y-4">
+        <div className="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+          <code className="min-w-0 flex-1 break-all text-xs select-all">{itemUrl(created.slug)}</code>
+          <button type="button" aria-label="Copy canonical URL" title="Copy canonical URL" onClick={copyUrl}><Copy size={16} /></button>
+        </div>
+        <p className="text-sm text-gray-500">Open NFC Tools → Write → URL → paste this URL → tap the physical item.</p>
+        <Button className={primaryClass} onClick={() => close(false)}>Done</Button>
+      </div> : <form onSubmit={submit} className="space-y-4">
+        <label className="block space-y-1 text-sm font-medium">Customer assignment
+          <select className={inputClass} value={mode} disabled={locked} onChange={event => setMode(event.target.value)}>
+            <option value="existing">Existing customer</option><option value="invite">Invite new customer</option>
+          </select>
+        </label>
+        {mode === 'existing' ? <CustomerSelector value={customer} onChange={setCustomer} disabled={locked} /> : <>
+          <label className="block space-y-1 text-sm font-medium">Customer name<input className={inputClass} value={fields.customerName} required minLength={2} maxLength={100} disabled={locked} onChange={event => update('customerName', event.target.value)} /></label>
+          <label className="block space-y-1 text-sm font-medium">Email<input className={inputClass} type="email" value={fields.email} required maxLength={254} disabled={locked} onChange={event => update('email', event.target.value)} /></label>
+          <label className="block space-y-1 text-sm font-medium">Confirm email<input className={inputClass} type="email" value={fields.confirmEmail} required disabled={locked} onChange={event => update('confirmEmail', event.target.value)} /></label>
+        </>}
+        <label className="block space-y-1 text-sm font-medium">Product type<select className={inputClass} value={fields.productType} disabled={locked} onChange={event => update('productType', event.target.value)}><option value="card">Card</option><option value="stand">Stand</option><option value="round_tag">Round Tag</option></select></label>
+        <div className="space-y-1">
+          <label htmlFor="admin-new-slug" className="text-sm font-medium">Slug</label>
+          <div className="flex gap-2"><input id="admin-new-slug" className={inputClass} value={fields.slug} required minLength={3} maxLength={30} pattern="[a-z0-9]+(-[a-z0-9]+)*" disabled={locked} onChange={event => update('slug', event.target.value)} /><Button type="button" variant="outline" size="icon" disabled={locked} aria-label="Generate slug" title="Generate slug" onClick={() => update('slug', crypto.randomUUID().slice(0, 8))}><Shuffle size={16} /></Button></div>
+          <p className="text-xs text-gray-500">3–30 lowercase letters, numbers or hyphens. This physical URL stays stable.</p>
+        </div>
+        {pending && <p className="text-xs text-gray-500 break-all">Saved operation: {pending.body.operationKey}. Retry uses the same request, including any customer already provisioned.</p>}
+        <p role="status" className="text-sm text-gray-500">{submitting ? 'Waiting for the API to confirm creation…' : pending ? 'Creation is not yet confirmed. Retry the saved request.' : 'New invitations require the customer to complete setup and publish before their profile is public.'}</p>
+        <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={submitting} onClick={() => close(false)}>{pending ? 'Close — keep request' : 'Cancel'}</Button><Button className={primaryClass} type="submit" disabled={submitting}>{submitting ? 'Creating…' : pending ? 'Retry creation' : 'Create item'}</Button></div>
+      </form>}
+      <Notice error={error} message={message} />
+    </DialogContent>
+  </Dialog>
 }

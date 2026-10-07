@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react'
+import { appOrigin } from '@/lib/platform'
 
 const DEFAULT_BG = 'linear-gradient(135deg, #0f172a, #1e293b)'
 
@@ -15,7 +16,7 @@ export default function NotFound() {
       </p>
       <div className="mt-10 flex justify-center">
         <a
-          href="https://beemhive.com"
+          href={appOrigin()}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs text-white/40"

@@ -10,9 +10,9 @@ export default function ProfilePreviewModal({ open, onOpenChange, slug, formStat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Profile Preview</DialogTitle>
+          <DialogTitle>Private draft preview</DialogTitle>
           <DialogDescription>
-            This is exactly what people see when they tap your card
+            A preview of your current draft, including unsaved edits. Visitors see only your published revision. Layout may differ on the public page.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-2">

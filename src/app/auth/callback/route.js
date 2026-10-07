@@ -1,36 +1,35 @@
-import { createServerClient } from '@supabase/ssr'
+import 'server-only'
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/middleware'
+import { createServiceClient } from '@/lib/supabase/server'
+import { resolveAccount } from '@/lib/auth'
+import { roleDestination } from '@/lib/supabase/redirects'
 
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/invite'
-
-  if (code) {
-    const response = NextResponse.redirect(`${origin}${next}`)
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return response
-    }
+  const params = new URL(request.url).searchParams
+  const bridge = createClient(request)
+  function redirect(path, error) {
+    const url = new URL(path, request.url)
+    if (error) url.searchParams.set('error', error)
+    const response = bridge.applyTo(NextResponse.redirect(url))
+    response.headers.set('Referrer-Policy', 'no-referrer')
+    return response
   }
-
-  return NextResponse.redirect(`${origin}/login`)
+  const code = params.get('code')
+  if (!code || code.length > 2048) return redirect('/login', 'invalid_callback')
+  try {
+    const exchanged = await bridge.supabase.auth.exchangeCodeForSession(code)
+    if (exchanged.error) return redirect('/login', 'invalid_callback')
+    const verified = await bridge.supabase.auth.getUser()
+    if (verified.error || !verified.data?.user) return redirect('/login', 'invalid_callback')
+    const { role, account } = await resolveAccount(createServiceClient(), verified.data.user, { allowSetup: true })
+    if (!role || (role === 'customer' && !account)) return redirect('/login', 'account_pending')
+    // A PKCE code (or caller-supplied type/next) never issues a setup capability.
+    return redirect(roleDestination(role, params.get('next')))
+  } catch (error) {
+    if (['account_inactive', 'invalid_role'].includes(error.code)) {
+      try { await bridge.supabase.auth.signOut({ scope: 'local' }) } catch { /* Preserve the account denial. */ }
+    }
+    return redirect('/login', error.code || 'auth_unavailable')
+  }
 }

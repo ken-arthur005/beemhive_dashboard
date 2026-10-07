@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Beem Hive NFC platform
 
-## Getting Started
+Offline sales → admin assignment → account setup → private draft → explicit publication → NFC/QR profile → attributed analytics.
 
-First, run the development server:
+E-commerce, Paystack, checkout, catalogue pricing and orders were explicitly removed from scope on 7 October 2026. One customer has one editable profile and may own multiple physical items. Every item keeps its stable `/t/{slug}` URL.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+## Development
+
+Use Node 22.17+ and pnpm 12.5.1. Install with `pnpm install --frozen-lockfile`.
+Copy `.env.example` to the ignored `.env.local`, configure Supabase public credentials,
+the **server-only** service-role key, a random IP hash secret of at least 32 characters,
+and the public origin. The current canonical origin is `https://beemhive.vercel.app`.
+
+```text
 pnpm dev
-# or
-bun dev
+pnpm lint
+pnpm test
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application requires the lifecycle migrations to be deployed. Never reset the
+existing Supabase project to make a local environment work. Ordinary server-user
+clients respect RLS; only guarded server operations use the isolated service client.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Database and validation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The patched framework is Next.js 16.3.6 with React 19.2.8. Compatibility CSS for
+the generated Base UI components lives in `src/app/component-variants.css`;
+the shadcn generator is not an application dependency. Regenerate components
+with a separately invoked, reviewed generator version when needed.
 
-## Learn More
+See [`supabase/README.md`](supabase/README.md) for the baseline, migration order,
+RPCs, analytics shape and separate Storage cutover. The migration baseline is a
+schema reconstruction, not a backup of Auth credentials or customer content.
 
-To learn more about Next.js, take a look at the following resources:
+Integration tests create and destroy their own uniquely named database on an
+isolated **localhost** PostgreSQL server. They refuse remote database URLs:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```powershell
+$env:TEST_DATABASE_URL = 'postgresql://postgres@127.0.0.1:55439/postgres'
+pnpm test:integration
+$env:PLAYWRIGHT_CHANNEL = 'chrome'
+pnpm test:ui
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`pnpm test` covers request/auth boundaries, autosave, contact serialization and
+image sanitization. Integration tests exercise actual Postgres constraints,
+transactions, RLS, concurrency, publication and deletion. Browser tests import
+production dashboard components but mock API responses; they are not a substitute
+for a real Auth/email/Storage smoke test.
 
-## Deploy on Vercel
+## Customer workflow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Admin invites a new customer or assigns an item to an existing customer.
+2. The customer follows a verified invite/recovery link and sets their password.
+3. All edits, including photo uploads, remain in a private revisioned draft.
+4. Publish saves pending edits and atomically captures the acknowledged revision.
+5. Later edits do not change the last published snapshot. Unpublish blocks all
+   public profile, contact and image endpoints without deleting the draft.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All six legacy customers must complete setup and publish after cutover; no legacy
+publication is automatically granted. Admins retain their existing roles.
+
+## Item/customer operations
+
+- Additional items reuse the customer's account and profile.
+- Transfer preserves the slug and historical assignment attribution, then pauses
+  the item until explicit admin reactivation.
+- Suspension blocks mutations/public exposure without changing item-specific flags.
+- Retirement retains the physical item record and URL.
+- Permanent customer deletion is a separate confirmed workflow. It blocks access,
+  retires/unassigns owned items, cleans media/Auth and redacts personal history.
+  Pending cleanup jobs remain visible and retryable after Auth removal.
+
+## Production cutover
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md). Auth email templates must use the supplied
+token-hash confirmation links; default fragment-only links do not attest setup.
+Configure secrets through local/deployment environment settings, never Git or chat.
+Existing published URLs become setup-required at cutover, intentionally.
+
+`IMPLEMENTATION.md` records API contracts. `.impeccable.md`, `PRODUCT.md` and
+`DESIGN.md` record the interface direction.

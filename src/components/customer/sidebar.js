@@ -16,6 +16,8 @@ const NAV_ITEMS = [
 
 function NavItem({ item, isCollapsed, onClick }) {
   const pathname = usePathname()
+  const { confirmNavigation } = useCustomerProfile()
+  function onNavigate(event) { if (!confirmNavigation()) event.preventDefault() }
   const isActive = pathname === item.href
   const Icon = item.icon
 
@@ -29,7 +31,7 @@ function NavItem({ item, isCollapsed, onClick }) {
 
   if (!isCollapsed) {
     return (
-      <Link href={item.href} onClick={onClick} className={linkClass}>
+      <Link href={item.href} data-customer-navigation onNavigate={onNavigate} onClick={onClick} className={linkClass}>
         <Icon size={18} className="shrink-0" />
         <span>{item.label}</span>
       </Link>
@@ -40,7 +42,7 @@ function NavItem({ item, isCollapsed, onClick }) {
     <Tooltip>
       <TooltipTrigger
         render={
-          <Link href={item.href} onClick={onClick} className={linkClass} />
+          <Link href={item.href} data-customer-navigation onNavigate={onNavigate} onClick={onClick} aria-label={item.label} className={linkClass} />
         }
       >
         <Icon size={18} className="shrink-0" />
@@ -56,8 +58,11 @@ function ProfileAvatar({ size = 'sm' }) {
 
   if (profile.photo_url) {
     return (
-      <img
+      <Image
         src={profile.photo_url}
+        width={size === 'sm' ? 28 : 32}
+        height={size === 'sm' ? 28 : 32}
+        unoptimized
         alt="Profile"
         className={`${dim} rounded-full object-cover shrink-0`}
       />
@@ -74,9 +79,10 @@ function ProfileAvatar({ size = 'sm' }) {
 
 export default function CustomerSidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onCloseMobile, userEmail }) {
   const router = useRouter()
-  const { profile } = useCustomerProfile()
+  const { profile, confirmNavigation } = useCustomerProfile()
 
   async function handleSignOut() {
+    if (!confirmNavigation()) return
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')

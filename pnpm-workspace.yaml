@@ -1,3 +1,15 @@
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+
+# Patched transitive dependencies; keep native image handling on one version.
+overrides:
+  sharp: 0.35.5
+  browserslist: 4.29.3
+  baseline-browser-mapping: 2.11.0
+  postcss: 8.5.29
+  source-map-js: 1.2.2
+  'nanoid@>=3.0.0 <3.3.18': 3.3.18
+  'brace-expansion@>=1.0.0 <2.0.0': 1.1.21
+  'brace-expansion@>=5.0.0 <5.0.12': 5.0.12
+  'js-yaml@>=4.0.0 <4.3.2': 4.3.2

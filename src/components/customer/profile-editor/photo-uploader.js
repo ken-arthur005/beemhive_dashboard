@@ -1,166 +1,53 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { Camera, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useCustomerProfile } from '../customer-profile-context'
+import { customerRequest } from '../customer-profile-context'
 
-export default function PhotoUploader({ userId, photoUrl, onPhotoChange, userInitial }) {
+export default function PhotoUploader({ photoUrl, onPhotoChange, onBusyChange, userInitial, disabled }) {
   const fileRef = useRef(null)
-  const [preview, setPreview] = useState(photoUrl)
-  const [isUploading, setIsUploading] = useState(false)
+  const controllerRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
-  const { setProfile } = useCustomerProfile()
+  useEffect(() => () => controllerRef.current?.abort(), [])
 
-  const prevPhotoRef = useRef(photoUrl)
-
-  const [isRemoving, setIsRemoving] = useState(false)
-
-  function handleClick() {
-    if (isUploading) return
-    fileRef.current?.click()
-  }
-
-  async function handleFileChange(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ''
+  async function handleFileChange(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || uploading || disabled) return
     setError(null)
-
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      setError('Please upload a JPG, PNG, or WebP image.')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5MB.')
-      return
-    }
-
-    const objectUrl = URL.createObjectURL(file)
-    const img = new Image()
-    img.src = objectUrl
-    img.onload = () => {
-      const scale = Math.min(400 / img.width, 400 / img.height, 1)
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.width * scale)
-      canvas.height = Math.round(img.height * scale)
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-      URL.revokeObjectURL(objectUrl)
-      canvas.toBlob(blob => uploadBlob(blob), 'image/jpeg', 0.85)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
-      setError('Could not read this image file — please try another.')
-    }
-  }
-
-  async function uploadBlob(blob) {
-    const blobUrl = URL.createObjectURL(blob)
-    setPreview(blobUrl)
-    setIsUploading(true)
-
-    const supabase = createClient()
-    const path = `${userId}/avatar.jpg`
-    const { error: uploadError } = await supabase.storage
-      .from('profile-photos')
-      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-
-    if (uploadError) {
-      setPreview(prevPhotoRef.current)
-      setError('Upload failed — please try again.')
-      setIsUploading(false)
-      return
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('profile-photos').getPublicUrl(path)
-    const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`
-
-    await supabase.from('profiles').update({ photo_url: cacheBustedUrl }).eq('user_id', userId)
-
-    prevPhotoRef.current = cacheBustedUrl
-    setPreview(cacheBustedUrl)
-    onPhotoChange(cacheBustedUrl)
-    setProfile(prev => ({ ...prev, photo_url: cacheBustedUrl }))
-    setIsUploading(false)
-  }
-
-  async function handleRemove() {
-    if (isRemoving) return
-    setError(null)
-    setIsRemoving(true)
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { setError('Upload a JPEG, PNG or WebP image.'); return }
+    if (file.size > 5 * 1024 * 1024) { setError('Your photo must be 5 MiB or smaller.'); return }
+    const controller = new AbortController()
+    controllerRef.current = controller
+    setUploading(true)
+    onBusyChange(true)
     try {
-      const supabase = createClient()
-      await supabase.storage.from('profile-photos').remove([`${userId}/avatar.jpg`])
-      const { error: updateError } = await supabase.from('profiles').update({ photo_url: null }).eq('user_id', userId)
-      if (updateError) { setError('Could not remove photo — please try again.'); return }
-      prevPhotoRef.current = null
-      setPreview(null)
-      onPhotoChange(null)
-      setProfile(prev => ({ ...prev, photo_url: null }))
-    } catch {
-      setError('Could not remove photo — please try again.')
+      const body = new FormData()
+      body.append('file', file)
+      const result = await customerRequest('/api/customer/media', { method: 'POST', body, signal: controller.signal })
+      if (!controller.signal.aborted) onPhotoChange(result.asset)
+    } catch (failure) {
+      if (!controller.signal.aborted) setError(failure.message)
     } finally {
-      setIsRemoving(false)
+      if (!controller.signal.aborted) { setUploading(false); onBusyChange(false) }
     }
   }
 
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Change profile photo"
-        aria-describedby={error ? 'photo-error' : undefined}
-        onClick={handleClick}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
-        className={`relative w-[120px] h-[120px] rounded-full select-none shrink-0 ${isUploading ? 'cursor-wait' : 'cursor-pointer'} group`}
-      >
-        {preview ? (
-          <img
-            src={preview}
-            alt="Profile"
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-4xl font-semibold">
-            {userInitial ?? '?'}
-          </div>
-        )}
-
-        <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-          {isUploading ? (
-            <Loader2 size={24} className="text-white animate-spin" />
-          ) : (
-            <>
-              <Camera size={22} className="text-white" />
-              <span className="text-white text-xs font-medium">Change photo</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {preview && !isUploading && (
-        <button
-          onClick={handleRemove}
-          disabled={isRemoving}
-          className="text-xs text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-50"
-        >
-          {isRemoving ? 'Removing…' : 'Remove photo'}
-        </button>
-      )}
-
-      {error && (
-        <p id="photo-error" className="text-xs text-rose-500 text-center max-w-[200px]">{error}</p>
-      )}
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={handleFileChange}
-      />
-    </div>
-  )
+  return <div className="flex flex-col items-center gap-3">
+    <button type="button" disabled={uploading || disabled} aria-label="Change profile photo" aria-describedby="photo-help"
+      onClick={() => fileRef.current?.click()} className="group relative w-[120px] h-[120px] rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-500 disabled:opacity-60">
+      {photoUrl ? <Image src={photoUrl} width={120} height={120} unoptimized alt="Draft profile photo" className="w-full h-full rounded-full object-cover" />
+        : <span className="w-full h-full rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-4xl font-semibold">{userInitial ?? '?'}</span>}
+      <span className={`absolute inset-0 rounded-full bg-black/50 flex items-center justify-center text-white ${uploading ? '' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'}`}>
+        {uploading ? <Loader2 size={24} className="animate-spin" /> : <Camera size={22} />}
+      </span>
+    </button>
+    {photoUrl && <button type="button" disabled={uploading || disabled} onClick={() => onPhotoChange(null)} className="text-xs text-gray-500 hover:text-rose-600 disabled:opacity-50">Remove photo from draft</button>}
+    <p id="photo-help" className="text-xs text-gray-500">JPEG, PNG or WebP · up to 5 MiB. Changes stay private.</p>
+    {error && <p role="alert" className="text-xs text-rose-600 max-w-xs text-center">{error}</p>}
+    <label htmlFor="profile-photo-file" className="sr-only">Upload profile photo</label>
+    <input id="profile-photo-file" ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
+  </div>
 }

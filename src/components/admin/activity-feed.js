@@ -1,26 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { MousePointerClick } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatRelativeTime } from '@/lib/utils'
 
-export default function ActivityFeed({ activity, loading, onRefresh }) {
-  const [lastUpdated, setLastUpdated] = useState(null)
-
-  // Track when activity prop changes to update "last updated" timestamp
-  useEffect(() => {
-    if (!loading) setLastUpdated(Date.now())
-  }, [activity, loading])
-
-  // Poll every 60s
-  useEffect(() => {
-    const id = setInterval(() => {
-      onRefresh()
-    }, 60000)
-    return () => clearInterval(id)
-  }, [onRefresh])
-
+export default function ActivityFeed({ activity, loading }) {
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -28,12 +12,7 @@ export default function ActivityFeed({ activity, loading, onRefresh }) {
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recent activity</p>
         </div>
         <div className="flex items-center gap-2">
-          {lastUpdated && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              Updated {formatRelativeTime(new Date(lastUpdated).toISOString())}
-            </span>
-          )}
-          <span className="text-xs text-gray-400 dark:text-gray-500">Last 20 tap events</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">Latest events in this period</span>
         </div>
       </div>
 
@@ -82,12 +61,13 @@ export default function ActivityFeed({ activity, loading, onRefresh }) {
                   {tap.owner_email && (
                     <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{tap.owner_email}</p>
                   )}
+                  <p className="text-xs text-gray-500">{tap.event_type === 'contact_download' ? 'Contact download' : 'Profile view'}</p>
                 </div>
 
                 {/* Right side */}
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                    {formatRelativeTime(tap.created_at)}
+                    {tap.created_at && Number.isFinite(Date.parse(tap.created_at)) ? formatRelativeTime(tap.created_at) : 'Time unavailable'}
                   </span>
                   <Badge
                     variant="outline"
@@ -97,7 +77,7 @@ export default function ActivityFeed({ activity, loading, onRefresh }) {
                         : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
                     }`}
                   >
-                    {isMobile ? 'Mobile' : 'Desktop'}
+                    {isMobile ? 'Mobile' : tap.device_type === 'desktop' ? 'Desktop' : tap.device_type || 'Unknown device'}
                   </Badge>
                 </div>
               </div>

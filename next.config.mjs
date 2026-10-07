@@ -2,7 +2,10 @@
 const nextConfig = {
   reactCompiler: true,
   images: {
-    remotePatterns: [new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/**`)],
+    remotePatterns: [],
+  },
+  async headers() {
+    return [{ source: '/t/:path*', headers: [{ key: 'Cache-Control', value: 'private, no-store' }] }];
   },
 };
 

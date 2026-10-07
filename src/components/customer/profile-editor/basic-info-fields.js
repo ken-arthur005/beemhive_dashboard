@@ -21,10 +21,12 @@ export default function BasicInfoFields({ name, title, bio, fieldErrors, onNameC
           onChange={e => onNameChange(e.target.value.slice(0, 60))}
           placeholder="e.g. Kofi Mensah"
           maxLength={60}
+          aria-invalid={Boolean(fieldErrors?.name)}
+          aria-describedby={fieldErrors?.name ? 'profile-name-error' : undefined}
           className={fieldErrors?.name ? inputError : inputNormal}
         />
         {fieldErrors?.name && (
-          <p className="mt-1 text-xs text-rose-500">{fieldErrors.name}</p>
+          <p id="profile-name-error" className="mt-1 text-xs text-rose-500">{fieldErrors.name}</p>
         )}
       </div>
 

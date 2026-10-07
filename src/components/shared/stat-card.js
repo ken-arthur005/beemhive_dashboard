@@ -31,11 +31,7 @@ export default function StatCard({ icon: Icon, value, label, trend, tooltip, loa
       <div className="flex items-center gap-1.5 flex-wrap">
         {tooltip ? (
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-sm text-gray-500 dark:text-gray-400 cursor-default underline decoration-dashed underline-offset-2">
-                {label}
-              </span>
-            </TooltipTrigger>
+            <TooltipTrigger render={<span tabIndex={0} className="text-sm text-gray-500 dark:text-gray-400 cursor-default underline decoration-dashed underline-offset-2" />}>{label}</TooltipTrigger>
             <TooltipContent>{tooltip}</TooltipContent>
           </Tooltip>
         ) : (

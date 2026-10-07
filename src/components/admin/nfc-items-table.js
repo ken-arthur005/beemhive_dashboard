@@ -1,439 +1,169 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Search, Plus, Copy, Check, MoreHorizontal } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useRef, useState } from 'react'
+import { Plus, Copy, MoreHorizontal } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from '@/components/ui/alert-dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import CreateNfcItemModal from '@/components/admin/create-nfc-item-modal'
-
-const PAGE_SIZE = 10
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { itemUrl } from '@/lib/platform'
+import CreateNfcItemModal from './create-nfc-item-modal'
+import CustomerSelector from './customer-selector'
+import { adminRequest } from './admin-api'
+import { useAdminList, useDebouncedSearch } from './use-admin-list'
+import { inputClass, cellClass, cardClass, primaryClass, Notice, ListState, Pagination, formatDate } from './admin-controls'
 
 const PRODUCT_LABELS = { card: 'Card', stand: 'Stand', round_tag: 'Round Tag' }
-const PRODUCT_BADGE_CLASSES = {
-  card: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  stand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  round_tag: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-}
-
-function formatDate(iso) {
-  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso))
-}
-
-let toastTimer = null
+const PRODUCT_BADGES = { card: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', stand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', round_tag: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
 
 export default function NfcItemsTable() {
-  const supabase = createClient()
+  const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all', page: 1 })
+  const search = useDebouncedSearch(filters.search)
+  const list = useAdminList('/api/admin/nfc-items', 'items', { ...filters, search })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [action, setAction] = useState(null)
+  const [target, setTarget] = useState(null)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState('')
+  const busyRef = useRef(false)
+  const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [message, setMessage] = useState('')
 
-  const [items, setItems] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(null)
-
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const debounceRef = useRef(null)
-
-  const [filterType, setFilterType] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [page, setPage] = useState(1)
-
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [toast, setToast] = useState(null)
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const [copiedId, setCopiedId] = useState(null)
-
-  function showToast(message, type = 'success') {
-    setToast({ message, type })
-    clearTimeout(toastTimer)
-    toastTimer = setTimeout(() => setToast(null), 3000)
+  function filter(name, value) { setFilters(previous => ({ ...previous, [name]: value, page: 1 })) }
+  function prepare(item, name) {
+    setAction({ item, name })
+    setTarget(null)
+    setReason('')
+    setActionError('')
   }
 
-  const handleSearch = useCallback((e) => {
-    const val = e.target.value
-    setSearch(val)
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 300)
-  }, [])
-
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      try {
-        const res = await fetch('/api/admin/nfc-items', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error ?? 'Failed to load')
-        setItems(data)
-      } catch (e) {
-        setFetchError(e.message)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    load()
-  }, [])
-
-  const filteredItems = useMemo(() => {
-    let result = items
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase()
-      result = result.filter(i =>
-        (i.ownerEmail ?? '').toLowerCase().includes(q) ||
-        i.slug.toLowerCase().includes(q)
-      )
-    }
-    if (filterType !== 'all') result = result.filter(i => i.product_type === filterType)
-    if (filterStatus !== 'all') result = result.filter(i => filterStatus === 'active' ? i.is_active : !i.is_active)
-    return result
-  }, [items, debouncedSearch, filterType, filterStatus])
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
-  const pagedItems = useMemo(() => filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filteredItems, page])
-
-  useEffect(() => { setPage(1) }, [debouncedSearch, filterType, filterStatus])
-
-  const togglingRef = useRef(new Set())
-
-  function handleToggle(item) {
-    if (togglingRef.current.has(item.id)) return
-    togglingRef.current.add(item.id)
-    const prev = items
-    const nextActive = !item.is_active
-    setItems(items.map(i => i.id === item.id ? { ...i, is_active: nextActive } : i))
-    supabase.from('nfc_items').update({ is_active: nextActive }).eq('id', item.id)
-      .then(({ error }) => {
-        if (error) { setItems(prev); showToast('Failed to update status', 'error') }
-      })
-      .finally(() => togglingRef.current.delete(item.id))
-  }
-
-  function handleDeleteConfirm() {
-    if (!deleteTarget) return
-    const target = deleteTarget
-    const prev = items
-    setItems(items.filter(i => i.id !== target.id))
-    setDeleteTarget(null)
-    supabase.from('nfc_items').delete().eq('id', target.id)
-      .then(({ error }) => {
-        if (error) { setItems(prev); showToast('Failed to delete item', 'error') }
-      })
-  }
-
-  function handleCreated(newItem) {
-    setItems(prev => [newItem, ...prev])
-    setIsModalOpen(false)
-    showToast(`NFC item created — invite sent to ${newItem.ownerEmail}`, 'success')
-  }
-
-  async function handleResendInvite(item) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { showToast('Session expired — please refresh', 'error'); return }
+  async function mutate(event) {
+    event.preventDefault()
+    if (busyRef.current || !action) return
+    if (action.name === 'transfer' && !target) { setActionError('Choose the new owner.'); return }
+    busyRef.current = true
+    setBusy(action.item.id)
+    setActionError('')
+    setError('')
+    setMessage('')
     try {
-      const res = await fetch('/api/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ mode: 'resend', email: item.ownerEmail }),
-      })
-      if (res.ok) showToast(`Invite resent to ${item.ownerEmail}`, 'success')
-      else showToast('Failed to resend invite', 'error')
-    } catch {
-      showToast('Failed to resend invite', 'error')
+      const body = { action: action.name, version: action.item.version, reason: reason.trim() }
+      if (action.name === 'transfer') body.targetOwnerId = target.user_id
+      const data = await adminRequest(`/api/admin/nfc-items/${encodeURIComponent(action.item.id)}`, { method: 'PATCH', body })
+      if (!data.item) throw new Error('The item update is not confirmed. Reload its status before retrying.')
+      setMessage(action.name === 'transfer' ? 'Ownership transferred. The item is paused and its physical URL is unchanged.' : `Item ${action.name === 'retire' ? 'retired; its URL and history are preserved' : action.name === 'activate' ? 'activated' : 'paused'}.`)
+      setAction(null)
+      list.reload()
+    } catch (error) {
+      setActionError(error.status === 409 ? `${error.message} Reloaded the list; close this dialog and review the latest item before retrying.` : error.message)
+      list.reload()
+    } finally {
+      busyRef.current = false
+      setBusy('')
     }
   }
 
-  function copySlugUrl(item) {
-    navigator.clipboard.writeText(`https://beemhive.com/t/${item.slug}`)
-    setCopiedId(item.id)
-    setTimeout(() => setCopiedId(null), 1500)
+  async function copy(item) {
+    setError('')
+    setMessage('')
+    try { await navigator.clipboard.writeText(itemUrl(item.slug)); setMessage('Canonical URL copied.') }
+    catch { setError(`Could not copy. Copy this URL manually: ${itemUrl(item.slug)}`) }
   }
 
-  function copyItemUrl(item) {
-    navigator.clipboard.writeText(`https://beemhive.com/t/${item.slug}`)
-    showToast('URL copied to clipboard', 'success')
+  async function resend(item) {
+    if (busyRef.current) return
+    busyRef.current = true
+    setBusy(item.id)
+    setError('')
+    setMessage('')
+    try {
+      const data = await adminRequest('/api/invite', { method: 'POST', body: { mode: 'resend', userId: item.owner_id } })
+      if (data.success !== true) throw new Error('Invitation resend is not confirmed. Please retry.')
+      setMessage('The API confirmed the setup invitation was resent.')
+    } catch (error) { setError(error.message) }
+    finally { busyRef.current = false; setBusy('') }
   }
 
-  const hasFilters = debouncedSearch || filterType !== 'all' || filterStatus !== 'all'
+  async function downloadQr(item) {
+    if (busyRef.current) return
+    busyRef.current = true
+    setBusy(item.id)
+    setError('')
+    setMessage('')
+    try {
+      const response = await fetch(`/api/qr?${new URLSearchParams({ slug: item.slug })}`, { credentials: 'same-origin', cache: 'no-store' })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(typeof data.error === 'string' ? data.error : 'QR download failed. Please retry.')
+      }
+      if (!response.headers.get('content-type')?.includes('image/png')) throw new Error('The API did not return a QR image. Please retry.')
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${item.slug}-qr.png`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setMessage('QR download started. A QR code does not make an inactive or unpublished profile public.')
+    } catch (error) { setError(error.message) }
+    finally { busyRef.current = false; setBusy('') }
+  }
 
-  return (
-    <div className="space-y-4">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">NFC Items</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            Manage your NFC products and customer assignments
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 active:bg-amber-700 px-3 py-2 text-sm font-semibold text-gray-900 transition-colors shrink-0"
-        >
-          <Plus size={16} />
-          Create NFC Item
-        </button>
-      </div>
-
-      {/* Table card */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              value={search}
-              onChange={handleSearch}
-              placeholder="Search by customer or slug…"
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-            />
-          </div>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Product type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="card">Card</SelectItem>
-              <SelectItem value="stand">Stand</SelectItem>
-              <SelectItem value="round_tag">Round Tag</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 shrink-0">
-            {!isLoading && `Showing ${filteredItems.length} of ${items.length} items`}
-          </span>
-        </div>
-
-        {/* Table */}
-        {fetchError ? (
-          <div className="px-4 py-12 text-center text-sm text-rose-500">{fetchError}</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-800">
-                  {['Product', 'Customer', 'Slug', 'Status', 'Taps', 'Created', ''].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-b border-gray-100 dark:border-gray-800/60 last:border-0">
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <td key={j} className="px-4 py-3">
-                          <Skeleton className="h-4 w-full" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : pagedItems.length === 0 ? null : (
-                  pagedItems.map(item => (
-                    <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
-                      {/* Product badge */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PRODUCT_BADGE_CLASSES[item.product_type] ?? 'bg-gray-100 text-gray-700'}`}>
-                          {PRODUCT_LABELS[item.product_type] ?? item.product_type}
-                        </span>
-                      </td>
-                      {/* Customer */}
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-[180px] truncate">
-                        {item.ownerEmail ?? <span className="text-gray-400">—</span>}
-                      </td>
-                      {/* Slug */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <code className="text-xs text-gray-700 dark:text-gray-300 font-mono">{item.slug}</code>
-                          <button
-                            onClick={() => copySlugUrl(item)}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                            title="Copy URL"
-                          >
-                            {copiedId === item.id
-                              ? <Check size={13} className="text-amber-600" />
-                              : <Copy size={13} />
-                            }
-                          </button>
-                        </div>
-                      </td>
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <Switch
-                          checked={item.is_active}
-                          onCheckedChange={() => handleToggle(item)}
-                        />
-                      </td>
-                      {/* Taps */}
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300 tabular-nums">
-                        {item.tapCount ?? '—'}
-                      </td>
-                      {/* Created */}
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {formatDate(item.created_at)}
-                      </td>
-                      {/* Actions */}
-                      <td className="px-4 py-3">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <button className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" />
-                            }
-                          >
-                            <MoreHorizontal size={16} />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => copyItemUrl(item)}>
-                              Copy URL
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleResendInvite(item)}>
-                              Resend invite
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleToggle(item)}>
-                              {item.is_active ? 'Deactivate' : 'Activate'}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => setDeleteTarget(item)}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-
-            {/* Empty states */}
-            {!isLoading && pagedItems.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-16">
-                {hasFilters ? (
-                  <>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No items match your search</p>
-                    <button
-                      onClick={() => { setSearch(''); setDebouncedSearch(''); setFilterType('all'); setFilterStatus('all') }}
-                      className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
-                    >
-                      Clear filters
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-3xl">📇</span>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No NFC items yet</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Create your first NFC item to get started</p>
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(true)}
-                      className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-2 text-sm font-semibold text-gray-900 transition-colors"
-                    >
-                      <Plus size={16} />
-                      Create NFC Item
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!isLoading && filteredItems.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Page {page} of {totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => p - 1)}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => p + 1)}
-                disabled={page === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete NFC item?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the NFC item and all its tap history. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-rose-600 hover:bg-rose-700 text-white border-transparent"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Create modal */}
-      <CreateNfcItemModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onCreated={handleCreated}
-      />
-
-      {/* Toast */}
-      {toast && (
-        <div
-          role="alert"
-          aria-live="polite"
-          className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg transition-opacity
-            ${toast.type === 'error' ? 'bg-rose-600' : 'bg-gray-900 dark:bg-gray-700'}`}
-        >
-          {toast.message}
-        </div>
-      )}
+  return <div className="space-y-4">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div><h1 className="text-xl font-semibold">NFC Items</h1><p className="mt-0.5 text-sm text-gray-500">Manage your NFC products and customer assignments</p></div>
+      <Button className={primaryClass} onClick={() => setCreateOpen(true)}><Plus size={16} />Create NFC Item</Button>
     </div>
-  )
+    <Notice error={error} message={message} />
+    {busy && <p role="status" className="text-sm text-gray-500">Waiting for API confirmation…</p>}
+    <div className={cardClass}>
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+        <input type="search" aria-label="Search NFC items" placeholder="Search by customer or slug…" className={`${inputClass} flex-1 min-w-40`} value={filters.search} onChange={event => filter('search', event.target.value)} />
+        <select aria-label="Product type filter" className={`${inputClass} w-auto`} value={filters.type} onChange={event => filter('type', event.target.value)}><option value="all">All types</option>{Object.entries(PRODUCT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
+        <select aria-label="Item status filter" className={`${inputClass} w-auto`} value={filters.status} onChange={event => filter('status', event.target.value)}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Paused</option><option value="retired">Retired</option></select>
+      </div>
+      <ListState list={list} noun="items" />
+      {!list.loading && !list.error && list.rows.length > 0 && <div className="overflow-x-auto"><table className="w-full text-sm">
+        <thead><tr className="border-b border-gray-200 dark:border-gray-800 text-xs text-gray-500">{['Product', 'Customer', 'Slug', 'Status', 'Taps', 'Created', 'Actions'].map(label => <th scope="col" key={label} className={cellClass}>{label}</th>)}</tr></thead>
+        <tbody>{list.rows.map(item => {
+          const retired = !!item.retired_at || item.status === 'retired'
+          return <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/40">
+            <td className={cellClass}><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PRODUCT_BADGES[item.product_type] || ''}`}>{PRODUCT_LABELS[item.product_type] || item.product_type}</span></td>
+            <td className={`${cellClass} max-w-48 truncate`} title={item.ownerEmail || ''}>{item.ownerEmail || 'Unassigned'}</td>
+            <td className={cellClass}><div className="flex items-center gap-2"><code className="text-xs">{item.slug}</code><button type="button" className="p-1 rounded focus-visible:ring-2 focus-visible:ring-amber-400" aria-label={`Copy canonical URL for ${item.slug}`} title="Copy canonical URL" onClick={() => copy(item)}><Copy size={14} /></button></div></td>
+            <td className={cellClass}><div className="flex items-center gap-2"><span>{retired ? 'Retired' : item.is_active ? 'Active' : 'Paused'}</span><Switch checked={!retired && !!item.is_active} disabled={retired || !!busy} aria-label={`${item.is_active ? 'Pause' : 'Activate'} ${item.slug}`} onCheckedChange={() => prepare(item, item.is_active ? 'deactivate' : 'activate')} /></div><span className="text-xs text-gray-500">Public access requires setup + publication</span></td>
+            <td className={cellClass}>{item.tapCount ?? '—'}</td><td className={cellClass}>{formatDate(item.created_at)}</td>
+            <td className={cellClass}><DropdownMenu>
+              <DropdownMenuTrigger render={<button type="button" disabled={!!busy} aria-label={`Actions for ${item.slug}`} title={`Actions for ${item.slug}`} className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-800" />}><MoreHorizontal size={16} /></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => copy(item)}>Copy canonical URL</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => downloadQr(item)}>Download QR (may be inactive/unpublished)</DropdownMenuItem>
+                <DropdownMenuItem disabled={!item.owner_id || retired} onClick={() => resend(item)}>Resend setup invitation</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled={retired} onClick={() => prepare(item, item.is_active ? 'deactivate' : 'activate')}>{item.is_active ? 'Pause item' : 'Activate item'}</DropdownMenuItem>
+                <DropdownMenuItem disabled={retired} onClick={() => prepare(item, 'transfer')}>Transfer ownership</DropdownMenuItem>
+                <DropdownMenuSeparator /><DropdownMenuItem variant="destructive" disabled={retired} onClick={() => prepare(item, 'retire')}>Retire item</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu></td>
+          </tr>
+        })}</tbody>
+      </table></div>}
+      {!list.error && <Pagination list={list} onPage={page => setFilters(previous => ({ ...previous, page }))} />}
+    </div>
+    <Dialog open={!!action} onOpenChange={open => { if (!open && !busyRef.current) setAction(null) }}>
+      <DialogContent showCloseButton={!busy} className="sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto">
+        <DialogHeader><DialogTitle>{action?.name === 'transfer' ? 'Transfer ownership' : action?.name === 'retire' ? 'Retire NFC item?' : action?.name === 'activate' ? 'Activate NFC item?' : 'Pause NFC item?'}</DialogTitle>
+          <DialogDescription>{action?.name === 'transfer' ? 'Choose an existing customer. Transfer pauses the item, closes its previous assignment and preserves its physical URL and tap history.' : action?.name === 'retire' ? 'Retirement disables public access permanently. The physical URL and tap history are preserved; the record is not deleted.' : action?.name === 'activate' ? 'Activation requires an active owner with completed setup and a published profile. The API will check eligibility.' : 'Public access will be paused. Its physical URL and history stay unchanged.'}</DialogDescription></DialogHeader>
+        <form className="space-y-4" onSubmit={mutate}>
+          <code className="block break-all text-xs">{action && itemUrl(action.item.slug)}</code>
+          {action?.name === 'transfer' && <CustomerSelector value={target} onChange={setTarget} excludeId={action.item.owner_id} disabled={!!busy} />}
+          <label className="block space-y-1 text-sm">Reason (optional)<input className={inputClass} maxLength={500} value={reason} disabled={!!busy} onChange={event => setReason(event.target.value)} /></label>
+          <Notice error={actionError} />
+          {busy && <p role="status" className="text-sm text-gray-500">Waiting for the API to confirm the item update…</p>}
+          <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={!!busy} onClick={() => setAction(null)}>Cancel</Button><Button type="submit" className={action?.name === 'retire' ? undefined : primaryClass} disabled={!!busy || (action?.name === 'transfer' && !target)} variant={action?.name === 'retire' ? 'destructive' : 'default'}>{busy ? 'Updating…' : action?.name === 'transfer' ? 'Transfer and pause' : action?.name === 'retire' ? 'Retire item' : 'Confirm'}</Button></div>
+        </form>
+      </DialogContent>
+    </Dialog>
+    <CreateNfcItemModal open={createOpen} onOpenChange={setCreateOpen} onCreated={() => { list.reload(); setMessage('The API confirmed the NFC item was created.'); setError('') }} />
+  </div>
 }
