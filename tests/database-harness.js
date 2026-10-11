@@ -60,7 +60,8 @@ export async function createHarness(value) {
         bucket_id text REFERENCES storage.buckets(id), name text NOT NULL, metadata jsonb, UNIQUE(bucket_id,name));
       ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
       GRANT USAGE ON SCHEMA public, auth, storage TO anon, authenticated, service_role;
-      GRANT SELECT, INSERT, UPDATE, DELETE ON auth.users, storage.buckets, storage.objects TO service_role;
+      GRANT INSERT, UPDATE, DELETE ON auth.users TO service_role;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON storage.buckets, storage.objects TO service_role;
       GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO anon, authenticated;
       CREATE POLICY legacy_storage_public ON storage.objects FOR ALL TO anon, authenticated USING(true) WITH CHECK(true);
     `)

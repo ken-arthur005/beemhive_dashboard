@@ -37,6 +37,7 @@ yarn-error.log*
 # Local agent tooling and test artifacts
 .agents/
 skills-lock.json
+.local-backups/
 test-results/
 playwright-report/
 tests/admin-ui-results/

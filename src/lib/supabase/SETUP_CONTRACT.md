@@ -94,9 +94,17 @@ Reset password (also existing-customer setup/resend):
 <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=recovery">Set your password</a>
 ```
 
+Verified invite completion automatically calls the service-only ensure_customer RPC
+after GoTrue verifies identity, repairing the role/account/draft without selecting
+privileges from metadata. Existing admin roles are never overwritten. Recovery for
+Auth-invited accounts can also reconcile incomplete provisioning.
+
 GET/HEAD confirmation displays a native Continue form without consuming the token;
 only the explicit same-origin POST verifies it, preventing ordinary email-link
-prefetch from burning the single-use credential. The server verifies the OTP once,
+prefetch from burning the single-use credential. Its referrer policy is strict-origin
+so native POST Origin remains valid while token-bearing paths are not sent as
+referrers. Both POST outcomes redirect with 303, not method-preserving 307.
+The server verifies the OTP once,
 persists an independent 30-minute cryptographic
 grant, then sets a Secure (production), HttpOnly, SameSite=Lax cookie. Retries use
 that grant, not the single-use OTP. GET setup never accepts an ordinary browser

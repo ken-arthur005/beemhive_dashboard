@@ -51,5 +51,12 @@ export function assertSameOrigin(request) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return
   if (request.headers.get('authorization')?.startsWith('Bearer ')) return
   const origin = request.headers.get('origin')
-  if (!origin || origin !== new URL(request.url).origin) throw new HttpError(403, 'Cross-origin request rejected.', 'invalid_origin')
+  const allowed = new Set([new URL(request.url).origin])
+  // Vercel may expose an internal deployment origin on a request reached through
+  // the public alias. Trust only the exact server-configured public origin too.
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    const configured = new URL(process.env.NEXT_PUBLIC_APP_URL)
+    if (['https:', 'http:'].includes(configured.protocol) && !configured.username && !configured.password) allowed.add(configured.origin)
+  }
+  if (!origin || origin === 'null' || !allowed.has(origin)) throw new HttpError(403, 'Cross-origin request rejected.', 'invalid_origin')
 }

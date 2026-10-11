@@ -18,7 +18,7 @@ const cacheHeaders = { 'Cache-Control': 'private, no-cache, no-store, must-reval
 const refreshedCookie = { name: 'sb-session', value: 'fresh', options: { path: '/', httpOnly: true } }
 
 function service(role = 'customer', status = 'active') {
-  return { from: vi.fn(table => {
+  return { rpc: vi.fn(async () => ({ error: null })), from: vi.fn(table => {
     const chain = {
       select: () => chain, eq: () => chain,
       maybeSingle: async () => ({ data: table === 'users_roles' ? { role } : { status } }),
@@ -151,6 +151,8 @@ describe('client boundaries and refresh propagation', () => {
     expect(inserted.mock.calls[0][0]).toMatchObject({ user_id: 'user', purpose: 'invite', consumed_at: null })
     expect(inserted.mock.calls[0][0].token_hash).not.toBe(cookie.value)
     expect(response.headers.get('location')).toBe('https://app.test/invite')
+    expect(response.status).toBe(303)
+    expect(privileged.rpc).toHaveBeenCalledWith('ensure_customer', { p_user_id: 'user', p_name: 'Beem Hive customer' })
     expect(response.headers.get('expires')).toBe('0')
     expect(response.cookies.get('sb-session').value).toBe('fresh')
   })
@@ -169,6 +171,7 @@ describe('client boundaries and refresh propagation', () => {
     expect(await response.text()).toContain('method="post"')
     expect(mocks.client.auth.verifyOtp).not.toHaveBeenCalled()
     expect(response.headers.get('Cache-Control')).toContain('no-store')
+    expect(response.headers.get('Referrer-Policy')).toBe('strict-origin')
   })
   it('HEAD profile requests are marked without refreshing Auth or accepting a spoofed method header', async () => {
     const response = await proxy(new NextRequest('https://app.test/t/card-one', { method: 'HEAD', headers: { 'x-beem-request-method': 'GET' } }))
@@ -184,5 +187,13 @@ describe('client boundaries and refresh propagation', () => {
     const bridge = bridgeClient(new NextRequest('https://app.test/login'))
     await bridge.supabase.auth.getUser()
     expect(bridge.applyTo(NextResponse.redirect('https://app.test/customer/profile')).cookies.get('sb-session').value).toBe('fresh')
+  })
+  it('rejects null and external POST origins before verifying an OTP, with a GET-safe error redirect', async () => {
+    for (const origin of ['null', 'https://untrusted.test']) {
+      const response = await confirm(new NextRequest('https://app.test/auth/confirm?token_hash=otp&type=invite', { method: 'POST', headers: { Origin: origin } }))
+      expect(response.status).toBe(303)
+      expect(response.headers.get('location')).toContain('error=invalid_origin')
+    }
+    expect(mocks.client.auth.verifyOtp).not.toHaveBeenCalled()
   })
 })

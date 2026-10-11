@@ -1,0 +1,15 @@
+.git
+.env*
+.local-backups
+.agents
+.playwright-mcp
+.next
+node_modules
+tests/**
+docs/**
+supabase/**
+scripts/**
+test-results
+playwright-report
+skills-lock.json
+**/.next-admin-ui

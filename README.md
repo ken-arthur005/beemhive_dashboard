@@ -74,6 +74,9 @@ publication is automatically granted. Admins retain their existing roles.
 
 ## Production cutover
 
+The production cutover was completed on 11 October 2026. Current live verification,
+email configuration and owner handover steps are in DELIVERY_STATUS.md.
+
 See [`DEPLOYMENT.md`](DEPLOYMENT.md). Auth email templates must use the supplied
 token-hash confirmation links; default fragment-only links do not attest setup.
 Configure secrets through local/deployment environment settings, never Git or chat.
