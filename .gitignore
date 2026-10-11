@@ -40,6 +40,7 @@ skills-lock.json
 .local-backups/
 test-results/
 playwright-report/
+.playwright-mcp/
 tests/admin-ui-results/
 **/.next-admin-ui/
 

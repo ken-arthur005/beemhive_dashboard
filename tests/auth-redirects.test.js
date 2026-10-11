@@ -17,4 +17,14 @@ describe('safe callback destinations', () => {
     expect(roleDestination('admin', '/customer/profile')).toBe('/admin/nfc-items')
     expect(roleDestination('customer', '/admin/customers')).toBe('/customer/profile')
   })
+  it('lands customers on their profile until first publish and on overview afterward', () => {
+    expect(roleDestination('customer', null, { hasPublished: false })).toBe('/customer/profile')
+    expect(roleDestination('customer', null, { hasPublished: true })).toBe('/customer/overview')
+    expect(roleDestination('customer', '//evil.test', { hasPublished: true })).toBe('/customer/overview')
+    expect(roleDestination('admin', null, { hasPublished: true })).toBe('/admin/nfc-items')
+  })
+  it('preserves explicitly requested customer pages after first publication', () => {
+    expect(roleDestination('customer', '/customer/profile', { hasPublished: true })).toBe('/customer/profile')
+    expect(roleDestination('customer', '/customer/analytics?days=30', { hasPublished: true })).toBe('/customer/analytics?days=30')
+  })
 })

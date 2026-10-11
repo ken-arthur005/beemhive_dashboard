@@ -4,8 +4,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import useReducedMotion from './use-reduced-motion'
 
-const PALETTE = ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#f43f5e']
+const PALETTE = ['#d6a52c', '#8e987b', '#c6ad7e', '#656f5f', '#be294c']
 
 function formatXDate(dateStr) {
   const [, m, d] = dateStr.split('-')
@@ -13,22 +14,23 @@ function formatXDate(dateStr) {
   return `${parseInt(d)} ${months[parseInt(m) - 1]}`
 }
 
-export default function TapsOverTimeChart({ data, lines, loading, isDark }) {
+export default function TapsOverTimeChart({ data, lines, loading, isDark, title = 'Profile views over time' }) {
+  const reducedMotion = useReducedMotion()
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+      <div className="hive-chart">
         <div className="h-[260px] rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
       </div>
     )
   }
 
-  const axisColor = isDark ? '#6b7280' : '#9ca3af'
-  const gridColor = isDark ? '#1f2937' : '#f3f4f6'
+  const axisColor = isDark ? '#aaa99d' : '#737269'
+  const gridColor = isDark ? '#ffffff0c' : '#eae7dc'
   const hasData = data.length > 0 && data.some(d => lines.some(l => (d[l.key] ?? 0) > 0))
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Taps over time</p>
+    <div className="hive-chart">
+      {title && <h2 className="hive-section-title mb-5">{title}</h2>}
       {!hasData ? (
         <div className="h-[260px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
           No tap data for this period
@@ -53,11 +55,11 @@ export default function TapsOverTimeChart({ data, lines, loading, isDark }) {
           />
           <Tooltip
             contentStyle={{
-              background: isDark ? '#111827' : '#ffffff',
-              border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-              borderRadius: '8px',
+              background: isDark ? '#242b24' : '#fdfcf8',
+              border: `1px solid ${isDark ? '#ffffff24' : '#e3e1d7'}`,
+              borderRadius: '14px',
               fontSize: '12px',
-              color: isDark ? '#f3f4f6' : '#111827',
+              color: isDark ? '#f5f3e9' : '#242820',
             }}
             labelFormatter={formatXDate}
           />
@@ -73,7 +75,9 @@ export default function TapsOverTimeChart({ data, lines, loading, isDark }) {
               dataKey={line.key}
               name={line.label}
               stroke={line.color ?? PALETTE[i % PALETTE.length]}
-              strokeWidth={2}
+              strokeWidth={3}
+              isAnimationActive={!reducedMotion}
+              animationDuration={650}
               dot={false}
               activeDot={{ r: 4 }}
             />

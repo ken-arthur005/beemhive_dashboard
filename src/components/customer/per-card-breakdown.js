@@ -13,9 +13,9 @@ export default function PerCardBreakdown({ cards, period }) {
   const grandTotal = totals.reduce((s, n) => s + n, 0)
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+    <div className="hive-panel hive-panel-pad">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Performance by card</p>
+        <h2 className="hive-section-title">Performance by card</h2>
         <span className="text-xs text-gray-400 dark:text-gray-500">{period}</span>
       </div>
       <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800">

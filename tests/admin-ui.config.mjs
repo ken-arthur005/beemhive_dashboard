@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['admin-ui.spec.mjs', 'customer-ui.spec.mjs', 'confirmation-ui.spec.mjs'],
+  testMatch: ['admin-ui.spec.mjs', 'customer-ui.spec.mjs', 'confirmation-ui.spec.mjs', 'overview-ui.spec.mjs'],
   outputDir: './admin-ui-results',
   fullyParallel: false,
   workers: 1,

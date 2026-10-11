@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import Brand from '@/components/shared/brand'
 import Link from 'next/link'
 import { useEffect } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
@@ -20,11 +20,7 @@ function NavItem({ item, isCollapsed, onClick }) {
   const isActive = pathname === item.href
   const Icon = item.icon
 
-  const linkClass = `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-    ${isActive
-      ? 'bg-amber-500 text-gray-900'
-      : 'text-gray-400 hover:bg-white/10 hover:text-white'
-    }
+  const linkClass = `hive-admin-sidebar-nav
     ${isCollapsed ? 'justify-center px-2' : ''}
   `
 
@@ -71,24 +67,23 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
   const userInitial = userEmail ? userEmail[0].toUpperCase() : '?'
 
   const avatarEl = (
-    <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium shrink-0">
+    <div className="hive-avatar shrink-0">
       {userInitial}
     </div>
   )
 
   function sidebarContent(collapsed, mobile = false) {
     return (
-    <div className={`flex flex-col h-full bg-[#111827] border-r border-white/10 transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
+    <div data-collapsed={collapsed} className={`hive-admin-sidebar flex flex-col h-full ${collapsed ? 'w-20' : 'w-64'}`}>
       {/* Logo + collapse toggle */}
-      <div className={`flex items-center gap-3 px-3 py-4 border-b border-white/10 ${collapsed ? 'justify-center' : ''}`}>
-        <Image src="/logo.png" alt="Beem Hive" width={24} height={24} className="shrink-0 rounded-sm" />
+      <div className={`flex items-center gap-2 px-5 py-7 ${collapsed ? 'justify-center flex-col' : ''}`}>
+        <Brand compact={collapsed} />
         {!collapsed && (
           <>
-            <span className="text-white font-semibold text-sm flex-1">Beem Hive</span>
             <button
               type="button"
               onClick={mobile ? onCloseMobile : onToggleCollapse}
-              className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="ml-auto p-1 text-muted-foreground hover:text-foreground"
               aria-label={mobile ? 'Close navigation' : 'Collapse sidebar'}
               title={mobile ? 'Close navigation' : 'Collapse sidebar'}
             >
@@ -105,7 +100,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
                   type="button"
                   aria-label="Expand sidebar"
                   title="Expand sidebar"
-                  className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="p-1 text-muted-foreground hover:text-foreground"
                 />
               }
             >
@@ -117,7 +112,8 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
       </div>
 
       {/* Nav items */}
-      <nav aria-label="Admin navigation" className="flex-1 flex flex-col gap-1 p-2 overflow-y-auto">
+      {!collapsed && <p className="hive-eyebrow px-8 pt-5 pb-4">Your workspace</p>}
+      <nav aria-label="Admin navigation" className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto">
         {NAV_ITEMS.map(item => (
           <NavItem
             key={item.href}
@@ -129,7 +125,8 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
       </nav>
 
       {/* User info + sign out */}
-      <div className={`flex items-center gap-2 px-3 py-3 border-t border-white/10 ${collapsed ? 'flex-col justify-center' : ''}`}>
+      {!collapsed && <div className="mx-6 mb-6 border-t border-border pt-5"><p className="font-heading text-lg tracking-tight">Connected, by design.</p><p className="text-[11px] text-muted-foreground mt-2">The home of your growing hive.</p></div>}
+      <div className={`flex items-center gap-3 px-5 py-5 border-t border-border ${collapsed ? 'flex-col justify-center' : ''}`}>
         {collapsed ? (
           <Tooltip>
             <TooltipTrigger render={<div className="cursor-default" />}>
@@ -140,9 +137,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
         ) : (
           <>
             {avatarEl}
-            <span className="text-gray-400 text-xs truncate flex-1 min-w-0" title={userEmail}>
-              {userEmail}
-            </span>
+            <div className="flex-1 min-w-0"><p className="text-xs font-semibold">Administrator</p><p className="text-muted-foreground text-[10px] truncate mt-1" title={userEmail}>{userEmail}</p></div>
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -151,7 +146,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
                     type="button"
                     aria-label="Sign out"
                     title="Sign out"
-                    className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                    className="p-1.5 text-muted-foreground hover:text-foreground shrink-0"
                   />
                 }
               >
@@ -170,7 +165,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
                   type="button"
                   aria-label="Sign out"
                   title="Sign out"
-                  className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-foreground"
                 />
               }
             >
@@ -187,7 +182,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, o
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex h-screen sticky top-0 shrink-0">
+      <aside className="hidden md:flex h-full shrink-0">
         {sidebarContent(isCollapsed)}
       </aside>
 

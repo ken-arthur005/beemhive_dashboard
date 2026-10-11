@@ -11,7 +11,7 @@ const TYPE_LABELS = {
 export default function TopItemsList({ items, loading, period = 'Selected period' }) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+      <div className="hive-panel hive-panel-pad">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Top NFC items</p>
         <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -32,9 +32,9 @@ export default function TopItemsList({ items, loading, period = 'Selected period
   const topCount = items[0]?.tap_count ?? 0
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+    <div className="hive-panel hive-panel-pad">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Top NFC items</p>
+        <h2 className="hive-section-title">Top NFC items</h2>
         <span className="text-xs text-gray-400 dark:text-gray-500">{period}</span>
       </div>
 

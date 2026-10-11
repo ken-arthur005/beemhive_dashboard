@@ -14,7 +14,7 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
   const typeId = `link-type-${link.id}`
 
   return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
-    className={`rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 ${isDragging ? 'z-10 relative shadow-lg' : ''}`}>
+    className={`border-b border-border py-4 ${isDragging ? 'z-10 relative shadow-lg bg-card rounded-xl p-3' : ''}`}>
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" ref={setActivatorNodeRef} {...attributes} {...listeners} disabled={disabled} tabIndex={0}
         aria-label={`Reorder ${currentType.label} link. Press Space to pick up, arrow keys to move, Space to drop.`}
@@ -33,7 +33,7 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
           onChange={event => { onUpdate(link.id, { url: event.target.value }); setUrlError(null) }}
           onBlur={() => { if (link.url && !currentType.validate(link.url)) setUrlError(`Enter a valid ${currentType.label.toLowerCase()} ${link.type === 'phone' ? 'number' : link.type === 'email' ? 'address' : 'URL'}.`) }}
           placeholder={currentType.placeholder} maxLength={500} disabled={disabled} aria-invalid={Boolean(urlError)} aria-describedby={urlError ? `${inputId}-error` : undefined}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50" />
+          className="hive-input" />
       </div>
     </div>
     {urlError && <p id={`${inputId}-error`} className="mt-2 text-xs text-rose-600">{urlError}</p>}

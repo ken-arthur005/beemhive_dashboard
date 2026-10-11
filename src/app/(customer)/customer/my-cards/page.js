@@ -53,11 +53,11 @@ export default function MyCardsPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4" data-reveal>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">My Cards</h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            Your NFC products and profile links
+          <p className="hive-eyebrow mb-3">Small objects. Lasting connections.</p><h1 className="hive-page-title">My Cards</h1>
+          <p className="hive-page-subtitle">
+            Your collection, ready for the next introduction.
           </p>
         </div>
         <div className="shrink-0 mt-0.5">

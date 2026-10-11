@@ -14,12 +14,13 @@ const PAGE_TITLES = {
 
 export default function Header({ onOpenMobile, userEmail, mobileTriggerRef, isMobileOpen }) {
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
+  const dark = resolvedTheme === 'dark'
   const pageTitle = PAGE_TITLES[pathname] ?? 'Admin'
   const userInitial = userEmail ? userEmail[0].toUpperCase() : '?'
 
   return (
-    <header className="h-14 flex items-center px-4 gap-3 bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800 shrink-0">
+    <header className="hive-admin-header shrink-0">
       {/* Mobile hamburger */}
       <button
         ref={mobileTriggerRef}
@@ -35,9 +36,7 @@ export default function Header({ onOpenMobile, userEmail, mobileTriggerRef, isMo
       </button>
 
       {/* Page title */}
-      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex-1">
-        {pageTitle}
-      </span>
+      <div className="flex-1 flex items-center gap-3 text-xs"><span className="text-muted-foreground hidden sm:inline">Workspace</span><span className="text-muted-foreground hidden sm:inline">/</span><span className="font-medium">{pageTitle}</span></div>
 
       {/* Right side controls */}
       <div className="flex items-center gap-2">
@@ -45,17 +44,17 @@ export default function Header({ onOpenMobile, userEmail, mobileTriggerRef, isMo
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={() => setTheme(dark ? 'light' : 'dark')}
+          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           className="text-gray-600 dark:text-gray-300"
         >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          {dark ? <Sun size={18} /> : <Moon size={18} />}
         </Button>
 
         <Separator orientation="vertical" className="h-6 bg-gray-200 dark:bg-gray-700" />
 
         {/* Admin avatar — TODO: profile dropdown */}
-        <div aria-label={`Signed in as ${userEmail}`} className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center text-gray-900 text-xs font-medium">
+        <div aria-label={`Signed in as ${userEmail}`} className="hive-avatar">
           {userInitial}
         </div>
       </div>

@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { CustomerProfileProvider, customerRequest } from '@/components/customer/customer-profile-context'
-import CustomerSidebar from '@/components/customer/sidebar'
 import CustomerHeader from '@/components/customer/header'
+import PageReveal from '@/components/shared/page-reveal'
+import Brand from '@/components/shared/brand'
 
 export default function CustomerLayout({ children }) {
   const router = useRouter()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
   const [initialData, setInitialData] = useState(null)
@@ -25,10 +24,6 @@ export default function CustomerLayout({ children }) {
       try {
         const session = await customerRequest('/api/auth/session', { signal: controller.signal })
         if (cancelled) return
-        try {
-          const collapsed = localStorage.getItem('beem_customer_sidebar_collapsed')
-          if (collapsed !== null) setIsCollapsed(collapsed === 'true')
-        } catch { /* Sidebar preferences are optional when storage is unavailable. */ }
         if (!session.user) { router.replace('/login'); return }
         if (session.role === 'admin') { router.replace('/admin/nfc-items'); return }
         if (session.role !== 'customer') throw new Error('This account does not have customer access.')
@@ -49,18 +44,10 @@ export default function CustomerLayout({ children }) {
     return () => { cancelled = true; controller.abort() }
   }, [router, attempt])
 
-  function handleToggleCollapse() {
-    setIsCollapsed(prev => {
-      const next = !prev
-      localStorage.setItem('beem_customer_sidebar_collapsed', String(next))
-      return next
-    })
-  }
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col gap-5 items-center justify-center bg-background">
+        <Brand /><p role="status" className="hive-eyebrow">Opening your hive…</p>
       </div>
     )
   }
@@ -77,23 +64,9 @@ export default function CustomerLayout({ children }) {
   return (
     <TooltipProvider>
       <CustomerProfileProvider initialData={initialData} userEmail={userEmail}>
-        <div className="flex h-screen overflow-hidden">
-          <CustomerSidebar
-            isCollapsed={isCollapsed}
-            isMobileOpen={isMobileOpen}
-            onToggleCollapse={handleToggleCollapse}
-            onCloseMobile={() => setIsMobileOpen(false)}
-            userEmail={userEmail}
-          />
-          <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-            <CustomerHeader
-              onOpenMobile={() => setIsMobileOpen(true)}
-              userEmail={userEmail}
-            />
-            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-4 md:p-6">
-              {children}
-            </main>
-          </div>
+        <div className="hive-shell">
+          <CustomerHeader userEmail={userEmail} />
+          <main id="main-content" className="hive-content"><PageReveal>{children}</PageReveal></main>
         </div>
       </CustomerProfileProvider>
     </TooltipProvider>

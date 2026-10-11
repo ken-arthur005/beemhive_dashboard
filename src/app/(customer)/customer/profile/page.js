@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Copy, Check, Eye } from 'lucide-react'
+import { Copy, Check, Eye, ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { createDraftSaveQueue, profileDraft } from '@/lib/draft-save-queue'
 import { itemUrl } from '@/lib/platform'
@@ -12,8 +12,11 @@ import BasicInfoFields from '@/components/customer/profile-editor/basic-info-fie
 import LinksEditor from '@/components/customer/profile-editor/links-editor'
 import SaveContactToggle from '@/components/customer/profile-editor/save-contact-toggle'
 import ProfilePreviewModal from '@/components/customer/profile-preview-modal'
+import PhoneMockup from '@/components/customer/phone-mockup'
 
 const THEME_PRESETS = [
+  { name: 'Honey', value: 'linear-gradient(135deg, #f8edcc, #ecd18a)' },
+  { name: 'Ivory', value: '#f7f6f2' },
   { name: 'Midnight', value: 'linear-gradient(135deg, #0f172a, #1e293b)' },
   { name: 'Forest', value: 'linear-gradient(135deg, #052e16, #14532d)' },
   { name: 'Ocean', value: 'linear-gradient(135deg, #0c4a6e, #0ea5e9)' },
@@ -23,10 +26,10 @@ const THEME_PRESETS = [
   { name: 'Slate', value: 'linear-gradient(135deg, #1e293b, #475569)' },
   { name: 'Pure Black', value: '#000000' },
 ]
-const secondary = 'rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-amber-500'
+const secondary = 'hive-action hive-action-outline'
 
-function Section({ title, children }) {
-  return <section className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col gap-4"><h2 className="text-sm font-semibold">{title}</h2>{children}</section>
+function Section({ title, step, children }) {
+  return <section className="hive-panel hive-panel-pad flex flex-col gap-5"><div className="flex items-baseline justify-between"><h2 className="hive-section-title">{title}</h2><span className="hive-eyebrow">{step}</span></div>{children}</section>
 }
 
 export default function ProfilePage() {
@@ -164,47 +167,47 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="text-gray-900 dark:text-gray-100">
-      <header className="mb-6">
-        <h1 className="text-xl font-semibold">My Profile</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Every edit is private until you explicitly publish a revision.</p>
+    <div className="hive-editor-page text-gray-900 dark:text-gray-100">
+      <header className="mb-8" data-reveal>
+        <p className="hive-eyebrow mb-3">Your identity, thoughtfully made</p><h1 className="hive-page-title">My Profile</h1>
+        <p className="hive-page-subtitle">Make it feel like you. Every edit stays private until you publish.</p>
       </header>
       {!setupComplete && <div className="mb-5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 text-sm">
         <p className="font-medium">Complete account setup before publishing</p>
         <p className="mt-1 text-gray-600 dark:text-gray-400">You can edit and save your draft now. Request a setup email, then follow its secure link to set your password. Signing in alone does not complete setup.</p>
         <Link href="/forgot-password" className="inline-block mt-2 font-medium text-amber-700 dark:text-amber-400 underline">Request setup email</Link>
       </div>}
-      <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-        <fieldset disabled={Boolean(action)} className="md:col-span-2 min-w-0 flex flex-col gap-5">
+      <div className="hive-editor-grid">
+        <fieldset disabled={Boolean(action)} className="min-w-0 flex flex-col gap-5" data-reveal>
           <legend className="sr-only">Private profile draft</legend>
-          <Section title="Basic info">
-            <div className="flex justify-center"><PhotoUploader photoUrl={photoUrl} userInitial={formState.userInitial}
+          <Section title="The introduction" step="01 / Identity">
+            <div className="flex items-center gap-5"><PhotoUploader photoUrl={photoUrl} userInitial={formState.userInitial}
               disabled={Boolean(action)} onBusyChange={setUploading}
-              onPhotoChange={asset => { setPhotoUrl(asset?.url ?? null); update({ photo_asset_id: asset?.id ?? null }) }} /></div>
+              onPhotoChange={asset => { setPhotoUrl(asset?.url ?? null); update({ photo_asset_id: asset?.id ?? null }) }} /><div><p className="text-sm font-medium">Put a face to your name.</p><p className="text-xs text-muted-foreground mt-1 leading-relaxed">A great photo makes your first impression personal.</p></div></div>
             <BasicInfoFields name={draft.name} title={draft.title} bio={draft.bio}
               fieldErrors={!draft.name.trim() && queueState.error ? { name: 'Display name is required' } : {}}
               onNameChange={name => update({ name })} onTitleChange={title => update({ title })} onBioChange={bio => update({ bio })} />
           </Section>
-          <Section title="Links">
+          <Section title="Ways to connect" step="02 / Links">
             <LinksEditor links={draft.links} onChange={links => update({ links })} disabled={Boolean(action)} />
             <SaveContactToggle checked={draft.show_save_contact} onChange={show_save_contact => update({ show_save_contact })} disabled={Boolean(action)} />
           </Section>
-          <Section title="Profile theme">
+          <Section title="Set the mood" step="03 / Appearance">
             <p className="text-xs text-gray-500 dark:text-gray-400">Choose the background for the next published revision.</p>
-            <div className="grid grid-cols-4 gap-3">{THEME_PRESETS.map(preset => {
-              const selected = (draft.background ?? THEME_PRESETS[0].value) === preset.value
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">{THEME_PRESETS.map(preset => {
+              const selected = (draft.background ?? 'linear-gradient(135deg, #0f172a, #1e293b)') === preset.value
               return <button key={preset.name} type="button" aria-label={preset.name} aria-pressed={selected} title={preset.name}
                 onClick={() => update({ background: preset.value })}
-                className="relative w-14 h-14 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-500"
-                style={{ background: preset.value, outline: selected ? '2px solid #f59e0b' : undefined }}>
-                {selected && <Check size={18} className="absolute inset-0 m-auto text-white" />}
+                className="hive-theme-swatch"
+                style={{ background: preset.value, outline: selected ? '2px solid var(--ring)' : undefined }}>
+                {selected && <Check size={18} className="absolute top-3 right-3 text-white bg-[#242820] rounded-full p-0.5" />}<span>{preset.name}</span>
               </button>
             })}</div>
           </Section>
         </fieldset>
-        <aside className="min-w-0"><div className="md:sticky md:top-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col gap-4">
+        <aside className="min-w-0" data-reveal><div className="lg:sticky lg:top-6 flex flex-col gap-5"><div className="hive-panel hive-panel-pad flex flex-col gap-4">
           <section aria-labelledby="publication-title">
-            <h2 id="publication-title" className="text-sm font-semibold">Public profile</h2>
+            <div className="flex justify-between items-center"><h2 id="publication-title" className="hive-section-title">Ready for the world?</h2><span className="hive-status text-muted-foreground">{publication ? 'Published' : 'Private'}</span></div>
             <p className="mt-2 text-sm">{publication ? `Published revision ${publication.revision}` : 'Unpublished — your profile is private'}</p>
             {publication?.published_at && <p className="text-xs text-gray-500 mt-1">Published {new Date(publication.published_at).toLocaleString()}</p>}
             {publication && <p className="mt-2 text-xs text-gray-500">Public name: {publication.content?.name || '—'}. Draft edits do not change this snapshot.</p>}
@@ -216,11 +219,11 @@ export default function ProfilePage() {
               <button className={secondary} disabled={Boolean(action) || uploading || (!queueState.dirty && !queueState.error)} onClick={() => runAction('save')}>
                 {action === 'save' ? 'Saving…' : queueState.conflict ? 'Save reviewed draft' : 'Save private draft'}
               </button>
-              <button className="rounded-lg bg-amber-500 hover:bg-amber-600 px-4 py-2.5 text-sm font-semibold text-gray-900 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              <button className="hive-action hive-action-primary"
                 disabled={!eligible || Boolean(action) || uploading || queueState.conflict || !draft.name.trim() || (!queueState.dirty && publication && String(publication.revision) === String(queueState.revision))}
                 onClick={() => runAction('publish')}>{action === 'publish' ? 'Publishing…' : 'Publish latest draft'}</button>
               <p className="text-xs text-gray-500">Publish saves pending edits first, then makes that revision public across your eligible items.</p>
-              {publication && <button className={secondary} disabled={Boolean(action)} onClick={() => runAction('unpublish')}>{action === 'unpublish' ? 'Unpublishing…' : 'Unpublish profile'}</button>}
+              {publication && <><Link href="/customer/overview" className="hive-text-link justify-center py-2">Go to your overview <ArrowUpRight size={15} /></Link><button className="text-xs text-muted-foreground underline py-2 disabled:opacity-50" disabled={Boolean(action)} onClick={() => runAction('unpublish')}>{action === 'unpublish' ? 'Unpublishing…' : 'Unpublish profile'}</button></>}
             </div>
           </div>
           <button className={`${secondary} flex items-center justify-center gap-2`} onClick={() => setPreviewOpen(true)}><Eye size={15} />Preview private draft</button>
@@ -232,7 +235,7 @@ export default function ProfilePage() {
             </div>
             <p className="mt-2 text-xs text-gray-500">This URL only opens a profile after setup and publication, with the item enabled.</p>
           </div> : <p className="text-xs text-gray-500">No NFC item assigned yet. You can still prepare your profile.</p>}
-        </div></aside>
+        </div><div className="hive-editor-preview"><div className="flex items-center justify-between mb-4"><p className="hive-eyebrow">Your private draft</p><button className="hive-text-link" onClick={() => setPreviewOpen(true)}>Expand <ArrowUpRight size={14} /></button></div><div className="flex justify-center"><PhoneMockup {...formState} /></div></div></div></aside>
       </div>
       <ProfilePreviewModal open={previewOpen} onOpenChange={setPreviewOpen} slug={slug} formState={formState} />
     </div>

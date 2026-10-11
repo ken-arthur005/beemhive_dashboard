@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button'
 
-export const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50'
+export const inputClass = 'hive-input'
 export const cellClass = 'px-4 py-3 text-left whitespace-nowrap'
-export const cardClass = 'rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden'
+export const cardClass = 'hive-panel overflow-hidden'
 export const primaryClass = 'bg-amber-500 hover:bg-amber-600 text-gray-900'
 
 export function Notice({ error, message }) {

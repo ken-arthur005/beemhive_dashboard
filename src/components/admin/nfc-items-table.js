@@ -14,7 +14,7 @@ import { useAdminList, useDebouncedSearch } from './use-admin-list'
 import { inputClass, cellClass, cardClass, primaryClass, Notice, ListState, Pagination, formatDate } from './admin-controls'
 
 const PRODUCT_LABELS = { card: 'Card', stand: 'Stand', round_tag: 'Round Tag' }
-const PRODUCT_BADGES = { card: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', stand: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', round_tag: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
+const PRODUCT_BADGES = { card: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', stand: 'bg-[#e8ebdf] text-[#4d5b3b] dark:bg-[#2f3b29] dark:text-[#c9d2bb]', round_tag: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
 
 export default function NfcItemsTable() {
   const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all', page: 1 })
@@ -111,13 +111,13 @@ export default function NfcItemsTable() {
 
   return <div className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><h1 className="text-xl font-semibold">NFC Items</h1><p className="mt-0.5 text-sm text-gray-500">Manage your NFC products and customer assignments</p></div>
+      <div data-reveal><p className="hive-eyebrow mb-3">Your connections, in good hands</p><h1>NFC Items</h1><p className="hive-page-subtitle">Manage your NFC products and customer assignments.</p></div>
       <Button className={primaryClass} onClick={() => setCreateOpen(true)}><Plus size={16} />Create NFC Item</Button>
     </div>
     <Notice error={error} message={message} />
     {busy && <p role="status" className="text-sm text-gray-500">Waiting for API confirmation…</p>}
     <div className={cardClass}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+      <div className="hive-filter-bar">
         <input type="search" aria-label="Search NFC items" placeholder="Search by customer or slug…" className={`${inputClass} flex-1 min-w-40`} value={filters.search} onChange={event => filter('search', event.target.value)} />
         <select aria-label="Product type filter" className={`${inputClass} w-auto`} value={filters.type} onChange={event => filter('type', event.target.value)}><option value="all">All types</option>{Object.entries(PRODUCT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
         <select aria-label="Item status filter" className={`${inputClass} w-auto`} value={filters.status} onChange={event => filter('status', event.target.value)}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Paused</option><option value="retired">Retired</option></select>
@@ -130,7 +130,7 @@ export default function NfcItemsTable() {
           return <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800/60 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/40">
             <td className={cellClass}><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PRODUCT_BADGES[item.product_type] || ''}`}>{PRODUCT_LABELS[item.product_type] || item.product_type}</span></td>
             <td className={`${cellClass} max-w-48 truncate`} title={item.ownerEmail || ''}>{item.ownerEmail || 'Unassigned'}</td>
-            <td className={cellClass}><div className="flex items-center gap-2"><code className="text-xs">{item.slug}</code><button type="button" className="p-1 rounded focus-visible:ring-2 focus-visible:ring-amber-400" aria-label={`Copy canonical URL for ${item.slug}`} title="Copy canonical URL" onClick={() => copy(item)}><Copy size={14} /></button></div></td>
+            <td className={cellClass}><div className="flex items-center gap-2"><code className="text-xs">{item.slug}</code><button type="button" className="p-2 rounded focus-visible:ring-2 focus-visible:ring-amber-400" aria-label={`Copy canonical URL for ${item.slug}`} title="Copy canonical URL" onClick={() => copy(item)}><Copy size={14} /></button></div></td>
             <td className={cellClass}><div className="flex items-center gap-2"><span>{retired ? 'Retired' : item.is_active ? 'Active' : 'Paused'}</span><Switch checked={!retired && !!item.is_active} disabled={retired || !!busy} aria-label={`${item.is_active ? 'Pause' : 'Activate'} ${item.slug}`} onCheckedChange={() => prepare(item, item.is_active ? 'deactivate' : 'activate')} /></div><span className="text-xs text-gray-500">Public access requires setup + publication</span></td>
             <td className={cellClass}>{item.tapCount ?? '—'}</td><td className={cellClass}>{formatDate(item.created_at)}</td>
             <td className={cellClass}><DropdownMenu>

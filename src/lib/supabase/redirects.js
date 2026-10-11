@@ -10,8 +10,8 @@ export function safeNext(value, fallback = '/customer/profile') {
   } catch { return fallback }
 }
 
-export function roleDestination(role, next) {
-  const fallback = role === 'admin' ? '/admin/nfc-items' : '/customer/profile'
+export function roleDestination(role, next, { hasPublished = false } = {}) {
+  const fallback = role === 'admin' ? '/admin/nfc-items' : hasPublished ? '/customer/overview' : '/customer/profile'
   const path = safeNext(next, fallback)
   const prefix = role === 'admin' ? '/admin' : '/customer'
   return path.split('?')[0] === prefix || path.startsWith(`${prefix}/`) ? path : fallback

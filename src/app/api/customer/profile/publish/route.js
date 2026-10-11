@@ -8,7 +8,7 @@ export async function POST(request) {
     const body = await readJson(request)
     const publication = checked(await supabase.rpc('publish_profile', { p_user_id: user.id, p_revision: revision(body.revision) }))
     const account = checked(await supabase.from('customer_accounts').select('*').eq('user_id', user.id).single())
-    return jsonResponse({ publication, account })
+    return jsonResponse({ publication, account, hasPublished: true })
   } catch (error) { return apiError(error) }
 }
 

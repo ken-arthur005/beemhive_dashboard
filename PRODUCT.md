@@ -16,7 +16,7 @@ Beem Hive is the back-office and customer experience layer for a physical NFC ca
 
 ## Brand Personality
 
-Clean, modern, professional. Confident without being loud. The product should feel like the best tool for the job — not the flashiest.
+Premium, warm, expressive and professional. The Honey & Ink makeover blends memorable visual presentation with operational clarity. Customers should feel proud to share their profile; clients should notice the craft.
 
 ## Anti-references
 
@@ -31,7 +31,7 @@ Clean, modern, professional. Confident without being loud. The product should fe
 2. **Elevate the customer profile.** The public `/t/{slug}` page is the product's face to the world — it must feel premium enough that the customer is proud to hand out the card.
 3. **Color earns its place.** Amber is the brand accent, pulled directly from the logo. Use it with intent — primary actions, active states, live status — not as decoration. When it appears, it should mean something.
 4. **Trust through consistency.** Consistent spacing, type scale, and component behavior across admin and customer panels. The product should feel like one coherent system, not two bolted-together dashboards.
-5. **Restraint over richness.** When in doubt, do less. A clean empty state beats a cluttered dashboard. Whitespace is not wasted space.
+5. **Intentional richness.** Dimensional NFC products, generous composition and expressive motion create a memorable experience. Keep information clear, use glass selectively, and respect reduced motion. Whitespace is not wasted space.
 
 ## Accessibility & Inclusion
 

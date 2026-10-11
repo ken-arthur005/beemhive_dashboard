@@ -8,6 +8,9 @@ import { Notice } from '@/components/admin/admin-controls'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import Sidebar from '@/components/admin/sidebar'
 import Header from '@/components/admin/header'
+import PageReveal from '@/components/shared/page-reveal'
+import { roleDestination } from '@/lib/supabase/redirects'
+import Brand from '@/components/shared/brand'
 
 export default function AdminLayout({ children }) {
   const router = useRouter()
@@ -28,7 +31,7 @@ export default function AdminLayout({ children }) {
         return
       }
       if (data.role !== 'admin') {
-        router.replace('/customer/profile')
+        router.replace(roleDestination(data.role, null, { hasPublished: data.hasPublished }))
         return
       }
       try { setIsCollapsed(localStorage.getItem('beem_sidebar_collapsed') === 'true') } catch { /* Preferences are optional. */ }
@@ -53,8 +56,8 @@ export default function AdminLayout({ children }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <p role="status" className="text-sm text-gray-500">Checking admin access…</p>
+      <div className="min-h-screen flex flex-col gap-5 items-center justify-center bg-background">
+        <Brand /><p role="status" className="hive-eyebrow">Opening your workspace…</p>
       </div>
     )
   }
@@ -63,7 +66,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="hive-shell hive-admin-shell">
         <Sidebar
           isCollapsed={isCollapsed}
           isMobileOpen={isMobileOpen}
@@ -79,8 +82,8 @@ export default function AdminLayout({ children }) {
             mobileTriggerRef={mobileTriggerRef}
             isMobileOpen={isMobileOpen}
           />
-          <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950 p-4 md:p-6">
-            {children}
+          <main id="main-content" className="hive-admin-main">
+            <PageReveal>{children}</PageReveal>
           </main>
         </div>
       </div>

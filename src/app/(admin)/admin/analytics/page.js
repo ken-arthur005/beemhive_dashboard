@@ -21,8 +21,8 @@ export default function AdminAnalyticsPage() {
 
   const rangeLabel = RANGES.find(range => range.days === days)?.label
   return <div className="space-y-6">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h1 className="text-xl font-semibold">Analytics</h1><p className="mt-0.5 text-sm text-gray-500">Platform-wide activity · UTC calendar days · assignment-at-event ownership</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3" data-reveal>
+      <div><p className="hive-eyebrow mb-3">The bigger picture</p><h1>Analytics</h1><p className="hive-page-subtitle">Platform-wide activity · UTC calendar days · assignment-at-event ownership</p></div>
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700" role="group" aria-label="Analytics period">{RANGES.map(range => <button key={range.days} type="button" aria-pressed={days === range.days} onClick={() => setDays(range.days)} className={`px-3 py-1.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-amber-500 ${days === range.days ? 'bg-amber-500 text-gray-900' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>{range.label}</button>)}</div>
         <Button variant="outline" size="sm" disabled={loading} onClick={reload}>Refresh</Button>
@@ -33,7 +33,7 @@ export default function AdminAnalyticsPage() {
       <AnalyticsStats totalItems={data?.totalItems} totalCustomers={data?.totalCustomers} tapsToday={data?.todayCount} totalTapsInRange={data?.totalTaps} trendPct={data?.trendPct} statsLoading={loading} tapsLoading={loading} />
       {!loading && data && <>
         <p className="text-sm text-gray-500">Contact downloads in this period: <strong className="text-gray-900 dark:text-gray-100">{data.contactDownloads.toLocaleString()}</strong></p>
-        <TapsOverTimeChart data={data.daily} lines={[{ key: 'taps', color: '#f59e0b', label: 'Taps' }]} loading={false} isDark={resolvedTheme === 'dark'} />
+        <TapsOverTimeChart data={data.daily} lines={[{ key: 'taps', color: '#d6a52c', label: 'Taps' }]} loading={false} isDark={resolvedTheme === 'dark'} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TopItemsList items={data.leaderboard} loading={false} period={rangeLabel === 'All' ? 'All time' : `Last ${days} days`} />
           <DeviceBreakdownChart mobile={data.deviceTotals.mobile ?? 0} desktop={data.deviceTotals.desktop ?? 0} tablet={data.deviceTotals.tablet ?? 0} unknown={data.deviceTotals.unknown ?? 0} loading={false} isDark={resolvedTheme === 'dark'} />

@@ -1,23 +1,25 @@
 'use client'
 
-import Image from 'next/image'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowUpRight } from 'lucide-react'
+import Brand from '@/components/shared/brand'
+import BeeScene from '@/components/shared/bee-scene'
 
-export const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:bg-gray-50'
-export const buttonClass = 'w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-amber-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 disabled:opacity-50'
+export const inputClass = 'hive-input'
+export const buttonClass = 'hive-action hive-action-primary w-full min-h-12'
 
 export function AuthShell({ children }) {
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-amber-400 to-yellow-500 flex-col items-center justify-center p-12">
-        <Image src="/logo.png" alt="Beem Hive" width={180} height={180} priority />
-        <p className="mt-6 text-amber-900 text-lg font-medium text-center">NFC-powered digital profiles.<br />Tap to connect, instantly.</p>
-      </div>
-      <main className="flex flex-1 items-center justify-center bg-white px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="flex justify-center mb-8 md:hidden"><Image src="/logo.png" alt="Beem Hive" width={120} height={120} priority /></div>
-          {children}
-        </div>
+    <div className="hive-auth-shell">
+      <section className="hive-auth-story" aria-label="Welcome to Beem Hive">
+        <Brand />
+        <div className="hive-auth-story-content"><p className="hive-eyebrow">Made for your next connection</p><h2>Every introduction.<br />A new possibility.</h2><BeeScene /><p className="hive-auth-tagline">Your world, one tap away.</p></div>
+        <div className="hive-auth-story-footer"><span>NFC-powered digital profiles</span><ArrowUpRight size={18} /></div>
+      </section>
+      <main id="main-content" className="hive-auth-main">
+        <div className="hive-auth-mobile-brand"><Brand /></div>
+        <div className="hive-auth-mobile-scene"><BeeScene compact /></div>
+        <div className="hive-auth-form"><p className="hive-eyebrow mb-5">Welcome to the hive</p>{children}</div>
+        <footer className="hive-auth-footer">Good connections start with you. <span>Beem Hive © {new Date().getFullYear()}</span></footer>
       </main>
     </div>
   )
@@ -26,7 +28,7 @@ export function AuthShell({ children }) {
 export function PasswordInput({ id, label, value, onChange, visible, onToggle, disabled, autoComplete = 'new-password', describedBy }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground mb-2">{label}</label>
       <div className="relative">
         <input id={id} name={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange}
           required minLength={autoComplete === 'new-password' ? 8 : undefined} maxLength={128}

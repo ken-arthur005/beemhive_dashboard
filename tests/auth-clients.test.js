@@ -21,6 +21,7 @@ function service(role = 'customer', status = 'active') {
   return { rpc: vi.fn(async () => ({ error: null })), from: vi.fn(table => {
     const chain = {
       select: () => chain, eq: () => chain,
+      limit: async () => ({ data: [], error: null }),
       maybeSingle: async () => ({ data: table === 'users_roles' ? { role } : { status } }),
       insert: vi.fn(async () => ({ error: null })),
     }

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient, getAuthSession } from '@/lib/supabase/client'
 import { roleDestination } from '@/lib/supabase/redirects'
 import { AuthShell, PasswordInput, inputClass, buttonClass, authMessage } from '../auth-ui'
+import { ArrowRight } from 'lucide-react'
 
 function loginError(error) {
   if (error.code === 'invalid_credentials') return 'Incorrect email or password.'
@@ -21,7 +22,7 @@ async function enterAccount(signal) {
     throw failure
   }
   const next = new URLSearchParams(window.location.search).get('next')
-  window.location.assign(roleDestination(session.role, next))
+  window.location.assign(roleDestination(session.role, next, { hasPublished: session.hasPublished }))
 }
 
 function LoginForm() {
@@ -65,20 +66,21 @@ function LoginForm() {
 
   return (
     <AuthShell>
-      <h1 className="text-2xl font-semibold text-gray-900">Welcome back</h1>
-      <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+      <h1>Let’s reconnect.</h1>
+      <p className="mt-3 text-sm text-muted-foreground">Sign in to make your next introduction count.</p>
       {checking ? <p role="status" className="mt-8 text-sm text-gray-600">Checking your account…</p> : (
         <form onSubmit={submit} className="mt-8 space-y-5" aria-busy={loading}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">Email</label>
             <input id="email" name="email" type="email" required maxLength={254} autoComplete="username" value={email}
               onChange={event => setEmail(event.target.value)} disabled={loading} className={inputClass} />
           </div>
           <PasswordInput id="password" label="Password" value={password} onChange={event => setPassword(event.target.value)}
             visible={visible} onToggle={() => setVisible(!visible)} disabled={loading} autoComplete="current-password" />
-          <div className="text-right"><a href="/forgot-password" className="text-sm text-amber-700 hover:underline">Forgot password?</a></div>
+          <div className="text-right"><a href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground hover:underline">Forgot password?</a></div>
           {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
-          <button type="submit" disabled={loading} className={buttonClass}>{loading ? 'Signing in…' : 'Sign in'}</button>
+          <button type="submit" disabled={loading} className={buttonClass}>{loading ? 'Signing in…' : <>Sign in <ArrowRight size={17} /></>}</button>
+          <p className="pt-4 text-center text-xs text-muted-foreground leading-relaxed">New to Beem Hive? Open the invitation in your email to activate your account.</p>
         </form>
       )}
     </AuthShell>

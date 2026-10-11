@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatRelativeTime } from '@/lib/utils'
 import { itemUrl } from '@/lib/platform'
+import { ProductVisual } from './nfc-collection'
+import { useCustomerProfile } from './customer-profile-context'
 
 const TYPE_CONFIG = {
   card:      { icon: CreditCard,        label: 'NFC Card' },
@@ -36,6 +38,7 @@ async function copyToClipboard(text, setCopied) {
 }
 
 export default function NfcCardItem({ item, account }) {
+  const { profile } = useCustomerProfile()
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedInstruction, setCopiedInstruction] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -69,7 +72,8 @@ export default function NfcCardItem({ item, account }) {
   const { icon: TypeIcon, label: typeLabel } = TYPE_CONFIG[item.product_type] ?? { icon: CreditCard, label: item.product_type }
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col gap-4">
+    <div className="hive-panel hive-panel-pad flex flex-col gap-5" data-reveal>
+      <div className="hive-item-visual" aria-hidden="true"><ProductVisual item={item} name={profile.name} /></div>
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">

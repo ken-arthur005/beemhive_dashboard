@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/middleware'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resolveAccount } from '@/lib/auth'
 import { roleDestination } from '@/lib/supabase/redirects'
+import { hasPublishedProfile } from '@/lib/publication-history'
 
 export async function GET(request) {
   const params = new URL(request.url).searchParams
@@ -22,10 +23,11 @@ export async function GET(request) {
     if (exchanged.error) return redirect('/login', 'invalid_callback')
     const verified = await bridge.supabase.auth.getUser()
     if (verified.error || !verified.data?.user) return redirect('/login', 'invalid_callback')
-    const { role, account } = await resolveAccount(createServiceClient(), verified.data.user, { allowSetup: true })
+    const auth = await resolveAccount(createServiceClient(), verified.data.user, { allowSetup: true })
+    const { role, account } = auth
     if (!role || (role === 'customer' && !account)) return redirect('/login', 'account_pending')
     // A PKCE code (or caller-supplied type/next) never issues a setup capability.
-    return redirect(roleDestination(role, params.get('next')))
+    return redirect(roleDestination(role, params.get('next'), { hasPublished: await hasPublishedProfile(auth) }))
   } catch (error) {
     if (['account_inactive', 'invalid_role'].includes(error.code)) {
       try { await bridge.supabase.auth.signOut({ scope: 'local' }) } catch { /* Preserve the account denial. */ }

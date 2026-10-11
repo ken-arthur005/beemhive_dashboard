@@ -6,10 +6,10 @@ import { formatRelativeTime } from '@/lib/utils'
 
 export default function ActivityFeed({ activity, loading }) {
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+    <div className="hive-panel hive-panel-pad">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recent activity</p>
+          <h2 className="hive-section-title">Recent activity</h2>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 dark:text-gray-500">Latest events in this period</span>
@@ -38,20 +38,7 @@ export default function ActivityFeed({ activity, loading }) {
             return (
               <div key={tap.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                 {/* Icon */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                  ${isMobile
-                    ? 'bg-amber-50 dark:bg-amber-950/40'
-                    : 'bg-blue-50 dark:bg-blue-950/40'
-                  }`}
-                >
-                  <MousePointerClick
-                    size={13}
-                    className={isMobile
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-blue-600 dark:text-blue-400'
-                    }
-                  />
-                </div>
+                <MousePointerClick size={17} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
 
                 {/* Slug + email */}
                 <div className="flex-1 min-w-0">
@@ -74,7 +61,7 @@ export default function ActivityFeed({ activity, loading }) {
                     className={`text-xs py-0 border-transparent ${
                       isMobile
                         ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                        : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                     }`}
                   >
                     {isMobile ? 'Mobile' : tap.device_type === 'desktop' ? 'Desktop' : tap.device_type || 'Unknown device'}

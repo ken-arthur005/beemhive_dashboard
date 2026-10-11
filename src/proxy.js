@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from './lib/supabase/middleware'
 import { createServiceClient } from './lib/supabase/server'
 import { resolveAccount } from './lib/auth'
+import { hasPublishedProfile } from './lib/publication-history'
+import { roleDestination } from './lib/supabase/redirects'
 
 export async function proxy(request) {
   if (request.nextUrl.pathname.startsWith('/t/')) {
@@ -27,8 +29,8 @@ export async function proxy(request) {
 
   if (error || !data?.user) return redirect('/login', error?.status >= 500 ? 'auth_unavailable' : undefined)
   try {
-    const { role } = await resolveAccount(createServiceClient(), data.user)
-    if (role !== requiredRole) return redirect(role === 'admin' ? '/admin/nfc-items' : '/customer/profile')
+    const auth = await resolveAccount(createServiceClient(), data.user)
+    if (auth.role !== requiredRole) return redirect(roleDestination(auth.role, null, { hasPublished: await hasPublishedProfile(auth) }))
   } catch (failure) {
     if (failure.code === 'account_inactive' || failure.code === 'invalid_role') {
       try { await bridge.supabase.auth.signOut({ scope: 'local' }) } catch { /* Preserve the account denial. */ }

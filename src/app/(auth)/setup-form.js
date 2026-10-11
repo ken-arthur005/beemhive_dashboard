@@ -33,7 +33,7 @@ function SetupFormContent({ purpose }) {
   const [error, setError] = useState(linkError ? authMessage(linkError) : '')
   const [passwordUpdated, setPasswordUpdated] = useState(false)
   const [destination, setDestination] = useState('/login')
-  const safeDestination = value => ['/admin/nfc-items', '/customer/profile'].includes(value) ? value : '/login'
+  const safeDestination = value => ['/admin/nfc-items', '/customer/profile', '/customer/overview'].includes(value) ? value : '/login'
 
   async function check() {
     setState('checking')

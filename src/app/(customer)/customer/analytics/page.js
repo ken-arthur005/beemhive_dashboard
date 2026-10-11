@@ -55,9 +55,9 @@ export default function CustomerAnalyticsPage() {
   const isDark = resolvedTheme === 'dark'
 
   return <div className="space-y-6">
-    <header className="flex flex-wrap items-center justify-between gap-3">
-      <div><h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Analytics</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Profile views and contact downloads · UTC calendar dates</p></div>
+    <header className="flex flex-wrap items-center justify-between gap-5" data-reveal>
+      <div><p className="hive-eyebrow mb-3">Every connection tells a story</p><h1 className="hive-page-title">Analytics</h1>
+        <p className="hive-page-subtitle">Your reach, in focus. Profile views and contact downloads · UTC dates.</p></div>
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="analytics-item" className="sr-only">Filter analytics by NFC item</label>
         <select id="analytics-item" value={item} onChange={event => setItem(event.target.value)} className="max-w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs focus:outline-amber-500">
@@ -81,7 +81,7 @@ export default function CustomerAnalyticsPage() {
         <h2 className="text-sm font-semibold">No profile views in this period</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try a longer range. New views are recorded when visitors open an enabled item with a published profile.</p>
       </div>}
-      <TapsOverTimeChart data={daily} lines={[{ key: 'taps', color: '#f59e0b', label: 'Profile views' }]} loading={loading} isDark={isDark} />
+      <TapsOverTimeChart data={daily} lines={[{ key: 'taps', color: '#d6a52c', label: 'Profile views' }]} loading={loading} isDark={isDark} />
       <div className="grid md:grid-cols-2 gap-6">
         <DeviceBreakdownChart mobile={devices.mobile ?? 0} desktop={devices.desktop ?? 0} tablet={devices.tablet ?? 0} unknown={devices.unknown ?? 0} loading={loading} isDark={isDark} />
         <TapsByHourChart data={(summary?.hourly ?? []).map(bucket => ({ hour: bucket.hour, count: bucket.taps }))} loading={loading} isDark={isDark} />

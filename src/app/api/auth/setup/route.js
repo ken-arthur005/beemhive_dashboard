@@ -4,6 +4,8 @@ import { requireUser } from '@/lib/auth'
 import { HttpError, apiError, assertSameOrigin, readJson } from '@/lib/http'
 import { applyUserHeaders } from '@/lib/supabase/server'
 import { readSetupGrant, completeSetup, clearSetupCookie } from '@/lib/supabase/setup-grants'
+import { hasPublishedProfile } from '@/lib/publication-history'
+import { roleDestination } from '@/lib/supabase/redirects'
 
 const noStore = { 'Cache-Control': 'private, no-store' }
 
@@ -24,7 +26,7 @@ export async function GET(request) {
     if (auth.role === 'admin' && grant.purpose !== 'recovery') throw new HttpError(403, 'Use an administrator recovery link.', 'wrong_role')
     return applyUserHeaders(request, NextResponse.json({
       state: grant.consumed_at ? 'completed' : (auth.role === 'admin' || (auth.account && auth.role) ? 'ready' : 'pending'),
-      next: auth.role === 'admin' ? '/admin/nfc-items' : '/customer/profile',
+      next: roleDestination(auth.role, null, { hasPublished: await hasPublishedProfile(auth) }),
       purpose: grant.purpose, expiresAt: grant.expires_at,
       passwordUpdated: Boolean(grant.password_updated_at),
     }, { headers: noStore }))
@@ -45,7 +47,7 @@ export async function POST(request) {
     const auth = await requireUser(request, { allowSetup: true })
     const grant = await readSetupGrant(auth.supabase, auth.user.id)
     await completeSetup(auth, grant, password)
-    const response = NextResponse.json({ success: true, next: auth.role === 'admin' ? '/admin/nfc-items' : '/customer/profile' }, { headers: noStore })
+    const response = NextResponse.json({ success: true, next: roleDestination(auth.role, null, { hasPublished: await hasPublishedProfile(auth) }) }, { headers: noStore })
     return applyUserHeaders(request, clearSetupCookie(response))
   } catch (error) {
     return error instanceof HttpError ? failure(request, error) : applyUserHeaders(request, apiError(error))

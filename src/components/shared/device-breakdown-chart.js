@@ -3,11 +3,13 @@
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import useReducedMotion from './use-reduced-motion'
 
 export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet = 0, unknown = 0, loading, isDark }) {
+  const reducedMotion = useReducedMotion()
   if (loading) {
     return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+      <div className="hive-chart">
         <div className="h-[240px] rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
       </div>
     )
@@ -20,12 +22,12 @@ export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet =
     { name: 'Tablet', value: tablet },
     { name: 'Unknown', value: unknown },
   ]
-  const colors = ['#f59e0b', isDark ? '#78350f' : '#fcd34d', '#9ca3af', '#6b7280']
+  const colors = ['#e1b640', '#8e987b', '#c6ad7e', '#797e70']
 
   if (total === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 flex flex-col">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device breakdown</p>
+      <div className="hive-chart flex flex-col">
+        <h2 className="hive-section-title mb-2">Device breakdown</h2>
         <div className="flex-1 flex items-center justify-center h-[220px] text-sm text-gray-400 dark:text-gray-500">
           No data yet
         </div>
@@ -34,8 +36,8 @@ export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet =
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device breakdown</p>
+    <div className="hive-chart">
+      <h2 className="hive-section-title mb-2">Device breakdown</h2>
       <div className="relative" style={{ height: 240 }}>
         {/* Center label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ marginBottom: 28 }}>
@@ -54,6 +56,11 @@ export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet =
               outerRadius={90}
               dataKey="value"
               labelLine={false}
+              cornerRadius={6}
+              paddingAngle={3}
+              stroke="none"
+              isAnimationActive={!reducedMotion}
+              animationDuration={650}
             >
               {data.map((_, i) => (
                 <Cell key={i} fill={colors[i]} />
@@ -61,11 +68,11 @@ export default function DeviceBreakdownChart({ mobile = 0, desktop = 0, tablet =
             </Pie>
             <Tooltip
               contentStyle={{
-                background: isDark ? '#111827' : '#ffffff',
-                border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '8px',
+                background: isDark ? '#242b24' : '#fdfcf8',
+                border: `1px solid ${isDark ? '#ffffff24' : '#e3e1d7'}`,
+                borderRadius: '14px',
                 fontSize: '12px',
-                color: isDark ? '#f3f4f6' : '#111827',
+                color: isDark ? '#f5f3e9' : '#242820',
               }}
               formatter={(value, name) => [`${value} taps`, name]}
             />

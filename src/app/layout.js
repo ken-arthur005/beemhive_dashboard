@@ -1,12 +1,13 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Manrope, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const interfaceFont = DM_Sans({
+  variable: "--font-interface",
   subsets: ["latin"],
 });
+const headingFont = Manrope({ variable: "--font-display", subsets: ["latin"] });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -23,10 +24,11 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${interfaceFont.variable} ${headingFont.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <a href="#main-content" className="hive-skip-link">Skip to content</a>
           {children}
           <Toaster />
         </ThemeProvider>

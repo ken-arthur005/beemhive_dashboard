@@ -14,7 +14,7 @@ describe('purpose-bound setup and cross-system retry', () => {
     token = 'a'.repeat(43)
     grant = { token_hash: grantHash(token), user_id: 'user', purpose: 'recovery',
       expires_at: new Date(Date.now() + 600_000).toISOString(), consumed_at: null, password_updated_at: null }
-    const chain = { select: vi.fn(() => chain), eq: vi.fn(() => chain), maybeSingle: vi.fn(async () => ({ data: grant })) }
+    const chain = { select: vi.fn(() => chain), eq: vi.fn(() => chain), maybeSingle: vi.fn(async () => ({ data: grant })), limit: vi.fn(async () => ({ data: [], error: null })) }
     auth = {
       user: { id: 'user', email: 'person@test.com' }, role: 'customer', account: { status: 'active' },
       supabase: { from: vi.fn(() => chain), rpc: vi.fn(async name => ({ data: name === 'claim_setup_grant' ? { state: 'ready' } : { success: true } })) },

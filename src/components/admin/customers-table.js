@@ -95,12 +95,12 @@ export default function CustomersTable() {
   }
 
   return <div className="space-y-4">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold">Customers</h1><p className="mt-0.5 text-sm text-gray-500">Manage account access, setup and publication independently</p></div><span className="text-xs text-gray-500">{list.loading ? 'Loading…' : `${list.total} matching customers`}</span></div>
+    <div className="flex flex-wrap items-start justify-between gap-4" data-reveal><div><p className="hive-eyebrow mb-3">The people in your hive</p><h1>Customers</h1><p className="hive-page-subtitle">Manage account access, setup and publication independently.</p></div><span className="text-xs text-muted-foreground mt-3">{list.loading ? 'Loading…' : `${list.total} matching customers`}</span></div>
     <Notice error={error} message={message} />
     <PendingCleanups />
     {busy && !action && <p role="status" className="text-sm text-gray-500">Waiting for API confirmation…</p>}
     <div className={cardClass}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+      <div className="hive-filter-bar">
         <input type="search" aria-label="Search customers" className={`${inputClass} flex-1 min-w-40`} placeholder="Search customers…" value={filters.search} onChange={event => filter('search', event.target.value)} />
         <select aria-label="Account status filter" className={`${inputClass} w-auto`} value={filters.status} onChange={event => filter('status', event.target.value)}><option value="all">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="deleting">Deleting</option></select>
         <select aria-label="Sort customers" className={`${inputClass} w-auto`} value={filters.sort} onChange={event => filter('sort', event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option><option value="nfc_count">Most NFC items</option></select>
