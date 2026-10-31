@@ -12,7 +12,7 @@ export function AuthShell({ children }) {
     <div className="hive-auth-shell">
       <section className="hive-auth-story" aria-label="Welcome to Beem Hive">
         <Brand />
-        <div className="hive-auth-story-content"><p className="hive-eyebrow">Made for your next connection</p><h2>Every introduction.<br />A new possibility.</h2><BeeScene /><p className="hive-auth-tagline">Your world, one tap away.</p></div>
+        <div className="hive-auth-story-content"><p className="hive-eyebrow">Made for your next connection</p><h2>Every introduction.<br />A new possibility.</h2><BeeScene /><p className="hive-auth-tagline">One Tap. Endless Possibilities</p></div>
         <div className="hive-auth-story-footer"><span>NFC-powered digital profiles</span><ArrowUpRight size={18} /></div>
       </section>
       <main id="main-content" className="hive-auth-main">

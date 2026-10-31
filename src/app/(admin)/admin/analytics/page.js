@@ -11,6 +11,7 @@ import DeviceBreakdownChart from '@/components/shared/device-breakdown-chart'
 import { useAdminResource } from '@/components/admin/use-admin-resource'
 import { normalizeAnalytics } from '@/components/admin/analytics-data'
 import { Notice, cardClass } from '@/components/admin/admin-controls'
+import VisitorMetrics from '@/components/shared/visitor-metrics'
 
 const RANGES = [{ label: '7D', days: '7' }, { label: '30D', days: '30' }, { label: '90D', days: '90' }, { label: 'All', days: 'all' }]
 
@@ -31,6 +32,7 @@ export default function AdminAnalyticsPage() {
     {loading && <p role="status" className="text-sm text-gray-500">Loading aggregate analytics…</p>}
     {error ? <div className={`${cardClass} space-y-3 p-6`}><Notice error={error} /><Button variant="outline" onClick={reload}>Retry analytics</Button></div> : <>
       <AnalyticsStats totalItems={data?.totalItems} totalCustomers={data?.totalCustomers} tapsToday={data?.todayCount} totalTapsInRange={data?.totalTaps} trendPct={data?.trendPct} statsLoading={loading} tapsLoading={loading} />
+      <VisitorMetrics summary={data} loading={loading} />
       {!loading && data && <>
         <p className="text-sm text-gray-500">Contact downloads in this period: <strong className="text-gray-900 dark:text-gray-100">{data.contactDownloads.toLocaleString()}</strong></p>
         <TapsOverTimeChart data={data.daily} lines={[{ key: 'taps', color: '#d6a52c', label: 'Taps' }]} loading={false} isDark={resolvedTheme === 'dark'} />

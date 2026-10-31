@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Beem Hive",
-  description: "NFC-powered digital profiles",
+  description: "One Tap. Endless Possibilities — NFC-powered digital profiles by Beem Hive.",
 };
 
 export default function RootLayout({ children }) {

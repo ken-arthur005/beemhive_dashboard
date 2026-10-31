@@ -6,7 +6,7 @@ export function profileDraft(profile) {
   return {
     name: profile.name ?? '', title: profile.title ?? '', bio: profile.bio ?? '',
     links: Array.isArray(profile.links) ? profile.links.map((link, index) => ({ ...link, id: typeof link.id === 'string' ? link.id : `legacy-${index}` })) : [], show_save_contact: profile.show_save_contact ?? true,
-    background: profile.background ?? null, photo_asset_id: profile.photo_asset_id ?? null,
+    background: profile.background ?? null, photo_asset_id: profile.photo_asset_id ?? null, photo_shape: profile.photo_shape ?? 'arch',
   }
 }
 

@@ -1,5 +1,50 @@
 # NFC database implementation
 
+## October 31 profile feedback release
+
+Apply `20261031222517_profile_feedback_and_unique_analytics.sql` **before** deploying
+this application version. It adds `profiles.photo_shape`, Snapchat validation,
+browser-event metadata and service-only tracking RPCs. Existing users, photos,
+slugs, publications and event totals are retained; historical publications with
+no photo shape continue to render as arches.
+
+Set a stable server-only `ANALYTICS_SECRET` (32+ random characters), or retain the
+existing `IP_HASH_SALT` as its fallback. Do not rotate this secret casually:
+changing it invalidates visitor cookies and resets browser continuity.
+
+Public views now record from a visible, hydrated published page, not from server
+rendering. This avoids counting RSC rendering, previews, HEAD and prefetches as
+visits. A signed, HttpOnly, Secure-on-HTTPS, SameSite=Lax cookie identifies a
+browser for one year. The database stores only an owner-scoped hash in the
+existing `ip_hash` column; new browser events are distinguished by non-null
+`visit_id`. Existing deletion anonymization clears these hashes too. Repeated
+visits have separate event UUIDs, while replaying an event UUID is idempotent.
+
+`analytics_summary` preserves its old fields and additionally returns
+`uniqueVisitors`, `repeatVisitors` (more than one visit in the selected period),
+`trackedViews`, `legacyViews`, `totalClicks`, `uniqueClickers`,
+`uniqueContactSavers`, `uniqueCtr`, and `contactConversionRate`. Daily/card rows
+include `uniqueVisitors`. Period uniques are distinct over the period, not sums
+of daily values. Unique metrics exclude legacy IP-only/unidentified events.
+CTR/contact conversion count only browser identities with a view in the same
+selected date/item scope; no denominator gives a null rate, displayed as `—`.
+Across all items, one browser counts once per customer profile. Platform-wide
+metrics count browser/profile pairs, not globally identified people.
+
+Link clicks keep their real destinations (including phone/email). A same-origin
+POST validates the published revision, link index and matching browser visit.
+Contact downloads are recorded on the gated vCard request, not on button intent.
+The legacy service-only event RPC remains available for compatibility and
+unidentified contact downloads; it is not used for new browser views.
+
+Phone drafts may remain incomplete. The application normalizes valid numbers to
+E.164 on save and validates country-aware numbers/platform hosts before publish;
+the database additionally requires international phone syntax on publication.
+
+Verification uses isolated localhost Postgres (`pnpm test:integration`), not a
+remote Supabase database. Apply migrations through the normal deployment process;
+these checks do not deploy them.
+
 These schema-only migrations preserve existing Auth users, profiles, NFC slugs,
 and Storage objects. They do not include commerce, production credentials, or
 data exports. No remote database changes are required to review or test them.

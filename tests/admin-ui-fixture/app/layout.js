@@ -8,5 +8,5 @@ const heading = Manrope({ variable: '--font-display', subsets: ['latin'] })
 const mono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export default function TestLayout({ children }) {
-  return <html lang="en" suppressHydrationWarning className={`${body.variable} ${heading.variable} ${mono.variable}`}><body><ThemeProvider attribute="class" defaultTheme="light">{children}<Toaster /></ThemeProvider></body></html>
+  return <html lang="en" suppressHydrationWarning className={`${body.variable} ${heading.variable} ${mono.variable} h-full antialiased`}><body className="min-h-full flex flex-col"><ThemeProvider attribute="class" defaultTheme="light">{children}<Toaster /></ThemeProvider></body></html>
 }

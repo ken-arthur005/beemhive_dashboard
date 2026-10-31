@@ -80,7 +80,7 @@
 .hive-brand-accent { color: #a77a12; }
 .dark .hive-brand-accent { color: #f3c442; }
 .dark .hive-brand-mark { filter: drop-shadow(0 0 1px #f8f5db77); }
-.hive-shell { background: var(--hive-shell); min-height: calc(100dvh - 36px); margin: 18px; border: 1px solid var(--border); border-radius: 32px; overflow: clip; }
+.hive-shell { width: calc(100% - 36px); background: var(--hive-shell); min-height: calc(100dvh - 36px); margin: 18px; border: 1px solid var(--border); border-radius: 32px; overflow: clip; }
 .hive-page { width: 100%; max-width: 1480px; margin-inline: auto; }
 .hive-content { padding: clamp(20px,3vw,44px); }
 .hive-panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--hive-shadow); }
@@ -137,6 +137,7 @@
 .hive-identity-copy p { font-size: 14px; color: #655426; }
 .hive-identity-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
 .hive-identity .hive-eyebrow { color: #705b2b; }
+.dark .hive-identity { background: linear-gradient(115deg,#f8df87,#f4ce60 60%,#ecbf4c); color: #302d1e; }
 .hive-collection { grid-column: 3; grid-row: span 2; display: flex; flex-direction: column; min-width: 0; }
 .hive-card-stack { position: relative; height: 250px; margin: 28px 2px 15px; perspective: 900px; }
 .hive-product-card { position: absolute; inset: auto 0 0; min-height: 180px; border-radius: 20px; padding: 23px; color: #f9f6e8; background: linear-gradient(125deg,#46523e,#252f24 60%,#525b3a); border: 1px solid #fff3; box-shadow: 0 16px 30px #18201930; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transform-style: preserve-3d; }
@@ -201,7 +202,7 @@
   .hive-performance-metrics dd { font-size: 28px; }
 }
 @media (max-width: 800px) {
-  .hive-shell { margin: 8px; min-height: calc(100dvh - 16px); border-radius: 24px; }
+  .hive-shell { width: calc(100% - 16px); margin: 8px; min-height: calc(100dvh - 16px); border-radius: 24px; }
   .hive-customer-header { padding: 18px 20px 4px; }
   .hive-desktop-nav { display: none; }
   .hive-mobile-trigger { display: inline-flex; }
@@ -274,6 +275,10 @@
 .hive-public-kicker { color: var(--profile-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .15em; }
 .hive-public-portrait { width: 130px; height: 160px; margin: 35px 0 27px; border-radius: 70px 70px 22px 22px; overflow: hidden; background: #e8ce89; color: #55472a; display: flex; align-items: center; justify-content: center; font-family: var(--font-display),sans-serif; font-size: 64px; box-shadow: 0 8px 25px #0002; }
 .hive-public-portrait img { height: 100%; width: 100%; object-fit: cover; }
+.hive-photo-upload { border-radius: 60px 60px 18px 18px; }
+[data-photo-shape=square] { border-radius: 0; aspect-ratio: 1; height: auto; }
+[data-photo-shape=circle] { border-radius: 50%; aspect-ratio: 1; height: auto; }
+[data-photo-shape=rounded] { border-radius: 18%; }
 .hive-public-header h1 { font-size: clamp(30px,7vw,44px); font-weight: 500; letter-spacing: -.055em; line-height: 1.1; margin-top: 10px; overflow-wrap: anywhere; }
 .hive-public-role { margin-top: 11px; font-size: 14px; color: var(--profile-muted); overflow-wrap: anywhere; }
 .hive-public-bio { font-size: 13px; line-height: 1.8; color: var(--profile-muted); white-space: pre-line; overflow-wrap: anywhere; margin-top: 20px; }
@@ -299,6 +304,7 @@
 .hive-public-preview .hive-public-kicker { font-size: 8px; }
 .hive-public-preview .hive-public-link { font-size: 12px; padding-block: 15px; }
 .hive-public-preview .hive-public-save { font-size: 11px; }
+.hive-public-preview [data-photo-shape=square], .hive-public-preview [data-photo-shape=circle] { height: auto; }
 @media (max-width: 900px) { .hive-editor-grid { grid-template-columns: minmax(0,1fr); } .hive-editor-preview { display: none; } }
 @media (max-width: 800px) {
   .hive-auth-shell { grid-template-columns: 1fr; padding: 8px; min-height: 100dvh; }

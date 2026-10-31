@@ -25,7 +25,7 @@ export async function GET(request) {
     button{width:100%;border:0;border-radius:99px;padding:15px;background:#f3c442;color:#292718;font:600 13px system-ui;cursor:pointer}button:hover{background:#ffda63}button:focus-visible{outline:2px solid #89600e;outline-offset:4px}
     footer{border-top:1px solid #e3e1d7;padding-top:20px;margin-top:32px;color:#737269;font-size:11px}
     @media(prefers-color-scheme:dark){body{background:#141815;color:#f5f3e9}main{background:#202620;border-color:#ffffff20}p,.eyebrow,footer{color:#aaa99d}footer{border-color:#ffffff20}.brand span{color:#f3c442}}
-  </style></head><body><main><div class="brand">Beem<span> Hive</span></div><p class="eyebrow">Your next connection starts here</p><h1>Complete your account setup</h1><p>Continue to securely verify this email link and set your password.</p><form method="post" action="${action}"><button type="submit">Continue to password setup</button></form><footer>A little tap. A world of possibility.</footer></main></body></html>`
+  </style></head><body><main><div class="brand">Beem<span> Hive</span></div><p class="eyebrow">Your next connection starts here</p><h1>Complete your account setup</h1><p>Continue to securely verify this email link and set your password.</p><form method="post" action="${action}"><button type="submit">Continue to password setup</button></form><footer>One Tap. Endless Possibilities</footer></main></body></html>`
   return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store',
     'Referrer-Policy': 'strict-origin', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" } })
 }

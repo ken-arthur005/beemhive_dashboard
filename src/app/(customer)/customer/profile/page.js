@@ -182,8 +182,9 @@ export default function ProfilePage() {
           <legend className="sr-only">Private profile draft</legend>
           <Section title="The introduction" step="01 / Identity">
             <div className="flex items-center gap-5"><PhotoUploader photoUrl={photoUrl} userInitial={formState.userInitial}
-              disabled={Boolean(action)} onBusyChange={setUploading}
+              disabled={Boolean(action)} onBusyChange={setUploading} shape={draft.photo_shape}
               onPhotoChange={asset => { setPhotoUrl(asset?.url ?? null); update({ photo_asset_id: asset?.id ?? null }) }} /><div><p className="text-sm font-medium">Put a face to your name.</p><p className="text-xs text-muted-foreground mt-1 leading-relaxed">A great photo makes your first impression personal.</p></div></div>
+            <fieldset><legend className="text-sm font-medium mb-2">Photo style</legend><div className="flex flex-wrap gap-2">{[['arch','Arch'],['square','Square'],['circle','Circle'],['rounded','Rounded rectangle']].map(([value,label]) => <button key={value} type="button" aria-pressed={draft.photo_shape === value} onClick={() => update({ photo_shape: value })} className={`hive-action ${draft.photo_shape === value ? 'hive-action-primary' : 'hive-action-outline'}`}>{label}</button>)}</div></fieldset>
             <BasicInfoFields name={draft.name} title={draft.title} bio={draft.bio}
               fieldErrors={!draft.name.trim() && queueState.error ? { name: 'Display name is required' } : {}}
               onNameChange={name => update({ name })} onTitleChange={title => update({ title })} onBioChange={bio => update({ bio })} />

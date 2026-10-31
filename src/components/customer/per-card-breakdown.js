@@ -36,8 +36,8 @@ export default function PerCardBreakdown({ cards, period }) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 tabular-nums w-10 text-right shrink-0">
-                {count}
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 tabular-nums text-right shrink-0">
+                {count} visits<span className="block text-[10px] text-muted-foreground">{card.uniqueVisitors ?? '—'} unique</span>
               </span>
             </div>
           )

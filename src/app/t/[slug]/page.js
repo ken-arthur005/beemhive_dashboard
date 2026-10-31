@@ -5,12 +5,13 @@ import { publicProfile } from '@/lib/public-profile'
 import { checked } from '@/lib/data'
 import { appOrigin } from '@/lib/platform'
 import ProfilePresentation, { DEFAULT_PROFILE_BACKGROUND } from '@/components/public/profile-presentation'
+import ProfileTracking from '@/components/public/profile-tracking'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PublicProfilePage({ params }) {
   const { slug } = await params
-  const { profile: resolved, supabase } = await publicProfile(slug, await headers(), 'profile_view')
+  const { profile: resolved, supabase } = await publicProfile(slug, await headers())
   if (!resolved) {
     const item = checked(await supabase.from('nfc_items').select('id').eq('slug', slug).maybeSingle())
     if (!item) notFound()
@@ -21,5 +22,5 @@ export default async function PublicProfilePage({ params }) {
     </main>
   }
   const profile = resolved.content
-  return <main id="main-content"><ProfilePresentation profile={profile} slug={slug} photoUrl={profile.photo_asset_id ? `/api/public/photo/${encodeURIComponent(slug)}` : null} homeHref={appOrigin()} /></main>
+  return <main id="main-content"><ProfileTracking key={`${slug}:${resolved.revision}`} slug={slug} revision={resolved.revision}><ProfilePresentation profile={profile} slug={slug} photoUrl={profile.photo_asset_id ? `/api/public/photo/${encodeURIComponent(slug)}` : null} homeHref={appOrigin()} /></ProfileTracking></main>
 }

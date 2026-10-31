@@ -1,6 +1,11 @@
+import { phoneNumber } from './profile-links'
+
 export function linkDestination(link) {
   const value = String(link.url || '').trim()
-  if (link.type === 'phone') return `tel:${value.replace(/^tel:/i, '').replace(/[ ()-]/g, '')}`
+  if (link.type === 'phone') {
+    const parsed = phoneNumber(value, link.phone_country)
+    return `tel:${parsed?.isValid() ? parsed.number : value.replace(/^tel:/i, '').replace(/[ ()-]/g, '')}`
+  }
   if (link.type === 'email') return `mailto:${value.replace(/^mailto:/i, '')}`
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null }
   catch { return null }

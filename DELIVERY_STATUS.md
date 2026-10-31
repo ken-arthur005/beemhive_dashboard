@@ -1,5 +1,25 @@
 # Live NFC platform status — 11 October 2026
 
+## Update — 31 October 2026: profile feedback database release
+
+- Applied `20261031222517_profile_feedback_and_unique_analytics` to production
+  project `muodxpvhjdvokpjmpgab` through the Supabase CLI migration workflow.
+- Preserved the existing remote migration history. The release used an isolated
+  temporary directory containing fetched remote migrations and the byte-identical
+  new migration; dry-run confirmed that only the new migration would execute.
+- Verified the photo-style column, four event metadata columns, three indexes,
+  and service-only, security-invoker permissions on the affected RPCs/helpers.
+- Before/after counts match: 12 profiles, 11 publications, 12 NFC items and
+  111 historical events. Existing profiles default to the arch style.
+- Verified the actual service-role Data API: 97 historical visits and 14 contact
+  downloads remain intact. Browser uniques start at zero and CTR is null until
+  the new application tracking records visits; legacy IP hashes are not backfilled
+  into fabricated browser identities.
+- Security/performance advisors report only the previously documented disabled
+  Auth leaked-password-protection warning; no new database warning was reported.
+- This step applied the database migration only. The profile/UI/tracking changes
+  still require an application deployment before customers see them.
+
 ## Applied and deployed
 
 - Lifecycle, publication, ownership, setup-grant, provisioning and cleanup schema/RPCs

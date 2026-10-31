@@ -48,7 +48,7 @@ export default function ActivityFeed({ activity, loading }) {
                   {tap.owner_email && (
                     <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{tap.owner_email}</p>
                   )}
-                  <p className="text-xs text-gray-500">{tap.event_type === 'contact_download' ? 'Contact download' : 'Profile view'}</p>
+                  <p className="text-xs text-gray-500">{tap.event_type === 'contact_download' ? 'Contact download' : tap.event_type === 'link_click' ? 'Link click' : 'Profile view'}</p>
                 </div>
 
                 {/* Right side */}

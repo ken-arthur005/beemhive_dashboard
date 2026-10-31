@@ -17,7 +17,7 @@ export default function AnalyticsStats({
       <StatCard
         icon={MousePointerClick}
         value={tapsLoading ? null : totalTapsInRange?.toLocaleString() ?? '—'}
-        label="Total taps"
+        label="Total visits"
         trend={trendPct}
         loading={tapsLoading}
       />
@@ -36,7 +36,7 @@ export default function AnalyticsStats({
       <StatCard
         icon={Zap}
         value={statsLoading ? null : tapsToday?.toLocaleString() ?? '—'}
-        label="Taps today"
+        label="Visits today"
         loading={statsLoading}
       />
     </div>

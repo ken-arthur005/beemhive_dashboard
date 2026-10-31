@@ -72,6 +72,9 @@ describe('verified API authorization', () => {
     await expect(requireUser(request(), { role: 'customer', allowSetup: true })).rejects.toMatchObject({ code: 'wrong_role' })
     expect(await requireUser(request(), { role: 'admin' })).toMatchObject({ role: 'admin', account: null })
   })
+  it('rejects a signed-in customer requesting admin access', async () => {
+    await expect(requireUser(request(), { role: 'admin' })).rejects.toMatchObject({ status: 403, code: 'wrong_role' })
+  })
   it('surfaces unavailable role reads, rather than treating them as absent', async () => {
     const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({ error: { code: 'XX000' } }) }
     mocks.service.mockReturnValue({ from: () => chain })

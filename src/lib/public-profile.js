@@ -1,7 +1,8 @@
 import 'server-only'
-import { createHmac } from 'node:crypto'
+import { createHmac, randomUUID } from 'node:crypto'
 import { createServiceClient } from './supabase/server'
 import { checked } from './data'
+import { visitorIdentity, visitorHash } from './visitor'
 
 export function eventContext(headers) {
   const agent = headers.get('user-agent') || ''
@@ -19,7 +20,15 @@ export function eventContext(headers) {
 export async function publicProfile(slug, headers, eventType = null) {
   const supabase = createServiceClient()
   const context = eventContext(headers)
-  const shouldRecord = eventType && (eventType === 'contact_download' || context.qualified)
+  const shouldRecord = eventType && context.qualified
+  const visitor = shouldRecord && eventType === 'contact_download' ? visitorIdentity(headers) : null
+  if (visitor) {
+    const profile = checked(await supabase.rpc('fetch_tracked_contact', {
+      p_slug: slug, p_visitor_hash: visitorHash(visitor), p_device_type: context.device,
+      p_referrer: context.referrer, p_event_id: randomUUID(),
+    }))
+    return { profile, supabase }
+  }
   const profile = checked(await supabase.rpc(shouldRecord ? 'fetch_public_profile' : 'resolve_public_profile', shouldRecord ? {
     p_slug: slug, p_event_type: eventType, p_ip_hash: context.ipHash, p_device_type: context.device, p_referrer: context.referrer,
   } : { p_slug: slug }))

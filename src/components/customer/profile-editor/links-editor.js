@@ -15,22 +15,12 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
-import {
-  Globe, AtSign, Share2, Briefcase, MessageCircle, Phone, Mail, Link2, Plus,
-} from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { LINK_TYPES } from '@/lib/profile-links'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import SortableLinkItem from './sortable-link-item'
 
-export const LINK_TYPES = [
-  { value: 'website',   label: 'Website',     Icon: Globe,         placeholder: 'https://yourwebsite.com',        validate: u => u.startsWith('https://') },
-  { value: 'instagram', label: 'Instagram',   Icon: AtSign,        placeholder: 'https://instagram.com/username', validate: u => u.includes('instagram.com') },
-  { value: 'twitter',   label: 'Twitter / X', Icon: Share2,        placeholder: 'https://x.com/username',         validate: u => u.includes('x.com') || u.includes('twitter.com') },
-  { value: 'linkedin',  label: 'LinkedIn',    Icon: Briefcase,     placeholder: 'https://linkedin.com/in/...',    validate: u => u.includes('linkedin.com') },
-  { value: 'whatsapp',  label: 'WhatsApp',    Icon: MessageCircle, placeholder: 'https://wa.me/233XXXXXXXXX',     validate: u => u.startsWith('https://wa.me/') },
-  { value: 'phone',     label: 'Phone',       Icon: Phone,         placeholder: '+233 XX XXX XXXX',               validate: u => /^\+\d/.test(u) },
-  { value: 'email',     label: 'Email',       Icon: Mail,          placeholder: 'you@example.com',                validate: u => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u) },
-  { value: 'custom',    label: 'Custom',      Icon: Link2,         placeholder: 'https://',                       validate: u => u.startsWith('https://') },
-]
+export { LINK_TYPES }
 
 const MAX_LINKS = 8
 

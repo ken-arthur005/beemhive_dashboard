@@ -9,6 +9,7 @@ import TapsOverTimeChart from '@/components/shared/taps-over-time-chart'
 import DeviceBreakdownChart from '@/components/shared/device-breakdown-chart'
 import TapsByHourChart from '@/components/customer/taps-by-hour-chart'
 import PerCardBreakdown from '@/components/customer/per-card-breakdown'
+import VisitorMetrics from '@/components/shared/visitor-metrics'
 
 const RANGES = [{ label: '7D', days: '7' }, { label: '30D', days: '30' }, { label: '90D', days: '90' }, { label: 'All', days: 'all' }]
 
@@ -81,7 +82,8 @@ export default function CustomerAnalyticsPage() {
         <h2 className="text-sm font-semibold">No profile views in this period</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try a longer range. New views are recorded when visitors open an enabled item with a published profile.</p>
       </div>}
-      <TapsOverTimeChart data={daily} lines={[{ key: 'taps', color: '#d6a52c', label: 'Profile views' }]} loading={loading} isDark={isDark} />
+      <VisitorMetrics summary={summary} loading={loading} />
+      <TapsOverTimeChart data={daily} lines={[{ key: 'taps', color: '#d6a52c', label: 'Total visits' }, { key: 'uniqueVisitors', color: '#8e987b', label: 'Unique visitors' }]} loading={loading} isDark={isDark} />
       <div className="grid md:grid-cols-2 gap-6">
         <DeviceBreakdownChart mobile={devices.mobile ?? 0} desktop={devices.desktop ?? 0} tablet={devices.tablet ?? 0} unknown={devices.unknown ?? 0} loading={loading} isDark={isDark} />
         <TapsByHourChart data={(summary?.hourly ?? []).map(bucket => ({ hour: bucket.hour, count: bucket.taps }))} loading={loading} isDark={isDark} />

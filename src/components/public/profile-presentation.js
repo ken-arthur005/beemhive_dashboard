@@ -1,9 +1,9 @@
-import { Globe, AtSign, Share2, Briefcase, MessageCircle, Phone, Mail, Link2, ArrowUpRight, UserPlus } from 'lucide-react'
+import { ArrowUpRight, UserPlus } from 'lucide-react'
 import { linkDestination } from '@/lib/contact'
+import { linkLabel } from '@/lib/profile-links'
+import LinkIcon from '@/components/shared/link-icon'
 import Brand from '@/components/shared/brand'
 
-const icons = { website: Globe, instagram: AtSign, twitter: Share2, linkedin: Briefcase, whatsapp: MessageCircle, phone: Phone, email: Mail, custom: Link2 }
-const labels = { website: 'Website', instagram: 'Instagram', twitter: 'Twitter / X', linkedin: 'LinkedIn', whatsapp: 'WhatsApp', phone: 'Phone', email: 'Email', custom: 'Visit link' }
 export const DEFAULT_PROFILE_BACKGROUND = 'linear-gradient(135deg, #0f172a, #1e293b)'
 
 export function lightProfileBackground(background) {
@@ -28,8 +28,8 @@ export default function ProfilePresentation({ profile, photoUrl, slug, preview =
   }
   return <div className={`hive-public-presentation ${preview ? 'hive-public-preview' : ''}`} style={style}>
     <article className="hive-public-sheet">
-      <header className="hive-public-header"><p className="hive-public-kicker">A little tap. A real connection.</p>
-        <div className="hive-public-portrait">{photoUrl ? (
+      <header className="hive-public-header"><p className="hive-public-kicker">One Tap. Endless Possibilities</p>
+        <div className="hive-public-portrait" data-photo-shape={profile.photo_shape || 'arch'}>{photoUrl ? (
           // Authenticated and public protected image responses must bypass shared caches.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photoUrl} alt={profile.name ? `${profile.name}'s profile photo` : 'Profile photo'} width={130} height={160} />
@@ -41,10 +41,9 @@ export default function ProfilePresentation({ profile, photoUrl, slug, preview =
       <div className="hive-public-links">{(profile.links || []).map((link,index) => {
         const href = link.url?.trim() ? linkDestination(link) : null
         if (!href && !preview) return null
-        const Icon = icons[link.type] || Link2
         const native = ['phone','email'].includes(link.type)
-        return <a key={link.id || index} href={href || undefined} aria-disabled={!href} target={native ? undefined : '_blank'} rel="noopener noreferrer" referrerPolicy="no-referrer" className="hive-public-link">
-          <Icon size={19} strokeWidth={1.5} aria-hidden="true" /><span>{link.label || labels[link.type] || 'Visit link'}</span><ArrowUpRight size={18} strokeWidth={1.5} aria-hidden="true" />
+        return <a key={link.id || index} data-profile-link={index} href={href || undefined} aria-disabled={!href} target={native ? undefined : '_blank'} rel="noopener noreferrer" referrerPolicy="no-referrer" className="hive-public-link">
+          <LinkIcon type={link.type} url={link.url} /><span>{linkLabel(link)}</span><ArrowUpRight size={18} strokeWidth={1.5} aria-hidden="true" />
         </a>
       })}</div>
       {profile.show_save_contact && (preview ? <button disabled className="hive-public-save"><UserPlus size={17} />Save Contact · preview only</button> : <a href={`/api/vcard?slug=${encodeURIComponent(slug)}`} className="hive-public-save"><UserPlus size={17} aria-hidden="true" />Save Contact <ArrowUpRight size={16} aria-hidden="true" /></a>)}

@@ -48,7 +48,7 @@ The Overview leads with digital identity, then real tap performance, the NFC col
 
 Publication history determines default landing: My Profile before the first publication; Overview afterward, including after unpublishing. Explicit safe dashboard destinations take precedence. Revision zero is a valid publication. Loading and failed history reads must never silently invent an onboarding state.
 
-Public profiles use arched portraits, editorial identity typography, divided link rows and a clear Save Contact action. Public rendering and draft previews share `profile-presentation.js`; preview contact downloads are disabled. Preserve protected photo handling, valid link destinations, customer-selected backgrounds and analytics ownership.
+Public profiles offer arch (the legacy default), square, circle and rounded-rectangle portraits, editorial identity typography, divided link rows and a clear Save Contact action. Public rendering and draft previews share `profile-presentation.js`; preview contact downloads are disabled. Preserve protected photo handling, valid link destinations, customer-selected backgrounds and analytics ownership. Social links use brand SVGs; custom links show the owner's label and a domain-detected icon. The slogan is **One Tap. Endless Possibilities**.
 
 ## Motion and materials
 

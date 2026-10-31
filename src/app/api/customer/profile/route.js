@@ -3,6 +3,7 @@ import { apiError, jsonResponse, readJson } from '@/lib/http'
 import { checked, revision } from '@/lib/data'
 import { itemUrl } from '@/lib/platform'
 import { hasPublishedProfile } from '@/lib/publication-history'
+import { normalizeDraftLinks } from '@/lib/profile-links'
 
 function preview(profile) {
   return { ...profile, photo_url: profile.photo_asset_id ? `/api/customer/media/${profile.photo_asset_id}` : null }
@@ -29,7 +30,7 @@ export async function PUT(request) {
     const { user, supabase } = await requireUser(request, { role: 'customer' })
     const { expectedRevision, draft } = await readJson(request)
     const profile = checked(await supabase.rpc('save_profile_draft', {
-      p_user_id: user.id, p_expected_revision: revision(expectedRevision), p_draft: draft,
+      p_user_id: user.id, p_expected_revision: revision(expectedRevision), p_draft: normalizeDraftLinks(draft),
     }))
     return jsonResponse({ profile: preview(profile) })
   } catch (error) { return apiError(error) }
