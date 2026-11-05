@@ -1,6 +1,7 @@
 import 'server-only'
 import { HttpError, assertSameOrigin } from './http'
 import { createServiceClient, createUserClient, createTokenClient } from './supabase/server'
+import { authorizeSession } from './session-security'
 
 export async function resolveAccount(supabase, user, { role: requiredRole, allowSetup = false } = {}) {
   const { data: roleRow, error: roleError } = await supabase.from('users_roles')
@@ -38,11 +39,13 @@ export async function requireUser(request, options = {}) {
   const authorization = request.headers.get('authorization')
   let userClient
   let result
+  let token
   if (authorization !== null) {
     const match = /^Bearer ([^\s]+)$/i.exec(authorization)
     if (!match) throw new HttpError(401, 'A valid bearer token is required.', 'invalid_token')
-    userClient = createTokenClient(match[1])
-    result = await userClient.auth.getUser(match[1])
+    token = match[1]
+    userClient = createTokenClient(token)
+    result = await userClient.auth.getUser(token)
   } else {
     userClient = await createUserClient(request)
     result = await userClient.auth.getUser()
@@ -52,5 +55,6 @@ export async function requireUser(request, options = {}) {
     throw new HttpError(401, 'Please sign in to continue.', 'unauthenticated')
   }
   const resolved = await resolveAccount(createServiceClient(), result.data.user, options)
-  return { ...resolved, userClient }
+  const security = await authorizeSession(resolved, userClient, { token, touch: options.touch === true, allowMfaPending: options.allowMfaPending === true })
+  return { ...resolved, ...security, userClient }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { linkError, linkLabel, normalizeDraftLinks } from '../src/lib/profile-links'
+import { LINK_TYPES, linkError, linkLabel, normalizeDraftLinks } from '../src/lib/profile-links'
 import { linkDestination } from '../src/lib/contact'
 
 test('validates country-aware numbers and normalizes saved numbers without discarding incomplete drafts', () => {
@@ -24,4 +24,17 @@ test('custom links use the owner label or an identifiable hostname for legacy un
   expect(linkLabel({ type: 'custom', label: ' Book a session ', url: 'https://example.com' })).toBe('Book a session')
   expect(linkLabel({ type: 'custom', url: 'https://www.youtube.com/@creator' })).toBe('youtube.com')
   expect(linkLabel({ type: 'snapchat', url: 'https://snapchat.com/add/creator' })).toBe('Snapchat')
+})
+
+test('all 28 reference options and Custom are unique, grouped, valid and have destinations', () => {
+  expect(LINK_TYPES).toHaveLength(29)
+  expect(new Set(LINK_TYPES.map(type => type.value)).size).toBe(29)
+  expect(LINK_TYPES.filter(type => type.value === 'whatsapp')).toHaveLength(1)
+  for (const type of LINK_TYPES) {
+    const url = type.value === 'phone' ? '+12025550123' : type.value === 'email' ? 'hello@example.com' : type.placeholder
+    expect(linkError({ type: type.value, url }), type.label).toBeNull()
+    expect(linkDestination({ type: type.value, url }), type.label).toBeTruthy()
+    expect(type.group).toBeTruthy()
+    if (type.hosts) expect(linkError({ type: type.value, url: `https://${type.hosts[0]}.evil.test/` }), type.label).toBeTruthy()
+  }
 })

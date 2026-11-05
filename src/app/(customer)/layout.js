@@ -7,6 +7,7 @@ import { CustomerProfileProvider, customerRequest } from '@/components/customer/
 import CustomerHeader from '@/components/customer/header'
 import PageReveal from '@/components/shared/page-reveal'
 import Brand from '@/components/shared/brand'
+import SessionGuard from '@/components/shared/session-guard'
 
 export default function CustomerLayout({ children }) {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function CustomerLayout({ children }) {
   const [initialData, setInitialData] = useState(null)
   const [error, setError] = useState(null)
   const [attempt, setAttempt] = useState(0)
+  const [security, setSecurity] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -28,6 +30,7 @@ export default function CustomerLayout({ children }) {
         if (session.role === 'admin') { router.replace('/admin/nfc-items'); return }
         if (session.role !== 'customer') throw new Error('This account does not have customer access.')
         if (session.account?.status !== 'active') throw new Error('Your account is currently unavailable. Contact Beem Hive for help.')
+        setSecurity(session)
         const data = await customerRequest('/api/customer/profile', { signal: controller.signal })
         if (cancelled) return
         if (data.account?.status !== 'active') throw new Error('Your account is currently unavailable. Contact Beem Hive for help.')
@@ -44,7 +47,9 @@ export default function CustomerLayout({ children }) {
     return () => { cancelled = true; controller.abort() }
   }, [router, attempt])
 
-  if (isLoading) {
+  // A terminal redirect can finish the effect before navigation commits. Never render
+  // a profile provider with null data while the sign-in/role redirect is in flight.
+  if (isLoading || (!error && !initialData)) {
     return (
       <div className="min-h-screen flex flex-col gap-5 items-center justify-center bg-background">
         <Brand /><p role="status" className="hive-eyebrow">Opening your hive…</p>
@@ -63,6 +68,7 @@ export default function CustomerLayout({ children }) {
 
   return (
     <TooltipProvider>
+      <SessionGuard initialSession={security?.session} userId={security?.user.id} role="customer" />
       <CustomerProfileProvider initialData={initialData} userEmail={userEmail}>
         <div className="hive-shell">
           <CustomerHeader userEmail={userEmail} />

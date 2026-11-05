@@ -18,7 +18,7 @@ const cacheHeaders = { 'Cache-Control': 'private, no-cache, no-store, must-reval
 const refreshedCookie = { name: 'sb-session', value: 'fresh', options: { path: '/', httpOnly: true } }
 
 function service(role = 'customer', status = 'active') {
-  return { rpc: vi.fn(async () => ({ error: null })), from: vi.fn(table => {
+  return { rpc: vi.fn(async name => ({ error: null, data: name === 'check_app_session' ? { valid: true } : null })), from: vi.fn(table => {
     const chain = {
       select: () => chain, eq: () => chain,
       limit: async () => ({ data: [], error: null }),
@@ -41,6 +41,7 @@ describe('client boundaries and refresh propagation', () => {
         mocks.options.cookies.setAll([refreshedCookie], cacheHeaders)
         return { data: { user: { id: 'user' } } }
       }),
+      getClaims: vi.fn(async () => ({ data: { claims: { sub: 'user', session_id: '30000000-0000-0000-0000-000000000001', aal: 'aal2' } } })),
       signOut: vi.fn(async () => {
         mocks.options.cookies.setAll([{ ...refreshedCookie, value: '', options: { path: '/', maxAge: 0 } }], cacheHeaders)
         return { error: null }
@@ -119,7 +120,16 @@ describe('client boundaries and refresh propagation', () => {
   })
   it('limits Auth refresh to dashboard/auth routes and public request-method tagging', () => {
     expect(config.matcher).not.toContain('/api/:path*')
-    expect(config.matcher.every(path => /^\/(admin|customer|login|invite|forgot-password|reset-password|auth|t)(\/|$)/.test(path))).toBe(true)
+    expect(config.matcher.every(path => /^\/(admin|customer|login|mfa|invite|forgot-password|reset-password|auth|t)(\/|$)/.test(path))).toBe(true)
+  })
+  it('routes first-factor admins to MFA with a safe return path and refreshed cookies', async () => {
+    mocks.js.mockReturnValue(service('admin'))
+    mocks.client.auth.getClaims.mockResolvedValue({ data: { claims: { sub: 'user', session_id: '30000000-0000-0000-0000-000000000001', aal: 'aal1' } } })
+    const response = await proxy(new NextRequest('https://app.test/admin/customers?page=2'))
+    const url = new URL(response.headers.get('location'))
+    expect(url.pathname).toBe('/mfa')
+    expect(url.searchParams.get('next')).toBe('/admin/customers?page=2')
+    expect(response.cookies.get('sb-session').value).toBe('fresh')
   })
   it('PKCE rejects malicious next and never grants setup from unchecked type', async () => {
     const response = await callback(new NextRequest('https://app.test/auth/callback?code=code&next=//evil.test&type=invite'))

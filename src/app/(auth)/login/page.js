@@ -22,7 +22,8 @@ async function enterAccount(signal) {
     throw failure
   }
   const next = new URLSearchParams(window.location.search).get('next')
-  window.location.assign(roleDestination(session.role, next, { hasPublished: session.hasPublished }))
+  const destination = roleDestination(session.role, next, { hasPublished: session.hasPublished })
+  window.location.assign(session.mfaRequired ? `/mfa?next=${encodeURIComponent(destination)}` : destination)
 }
 
 function LoginForm() {

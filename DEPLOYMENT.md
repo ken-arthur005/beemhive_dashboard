@@ -10,6 +10,15 @@ configure the application's environment or grant access to Auth email templates.
 
 ## Prerequisites
 
+### November security/link release
+
+See `docs/AUTH_SECURITY_AND_EMAIL.md` for the two additive November 5 migrations,
+mandatory administrator TOTP enrollment/recovery, role-specific app-session limits,
+and branded-email forwarding to **beemhive305@gmail.com**. Apply the migrations and
+compatible application together after staging verification. Existing old sessions
+may expire immediately. Domain/SMTP/forwarding details still require owner input;
+email setup and real hosted Auth/MFA tests are not completed by a local build.
+
 1. Supply SUPABASE_SERVICE_ROLE_KEY in ignored `.env.local` and Vercel settings.
    Keep NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY public; never prefix the secret key.
 2. Authenticate Vercel and link the existing project serving beemhive.vercel.app.

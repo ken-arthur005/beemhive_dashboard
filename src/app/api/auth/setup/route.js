@@ -19,7 +19,7 @@ function failure(request, error) {
 
 export async function GET(request) {
   try {
-    const auth = await requireUser(request, { allowSetup: true })
+    const auth = await requireUser(request, { allowSetup: true, allowMfaPending: true })
     const purpose = new URL(request.url).searchParams.get('purpose')
     if (!['invite', 'recovery'].includes(purpose)) throw new HttpError(400, 'Invalid setup purpose.', 'invalid_grant')
     const grant = await readSetupGrant(auth.supabase, auth.user.id, purpose)
@@ -44,7 +44,7 @@ export async function POST(request) {
     if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
       throw new HttpError(400, 'Password must contain 8 to 128 characters.', 'invalid_password')
     }
-    const auth = await requireUser(request, { allowSetup: true })
+    const auth = await requireUser(request, { allowSetup: true, allowMfaPending: true })
     const grant = await readSetupGrant(auth.supabase, auth.user.id)
     await completeSetup(auth, grant, password)
     const response = NextResponse.json({ success: true, next: roleDestination(auth.role, null, { hasPublished: await hasPublishedProfile(auth) }) }, { headers: noStore })

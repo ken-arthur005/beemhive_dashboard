@@ -11,6 +11,9 @@ export async function customerRequest(url, options = {}) {
     const error = new Error((typeof data.error === 'string' ? data.error : data.error?.message) || data.message || 'The request failed. Please try again.')
     error.status = response.status
     error.code = data.code
+    if (typeof window !== 'undefined' && ['session_expired', 'unauthenticated', 'mfa_required'].includes(error.code)) {
+      window.dispatchEvent(new CustomEvent('beem:auth-required', { detail: error.code }))
+    }
     throw error
   }
   return data

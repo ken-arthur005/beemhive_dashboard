@@ -11,6 +11,7 @@ import Header from '@/components/admin/header'
 import PageReveal from '@/components/shared/page-reveal'
 import { roleDestination } from '@/lib/supabase/redirects'
 import Brand from '@/components/shared/brand'
+import SessionGuard from '@/components/shared/session-guard'
 
 export default function AdminLayout({ children }) {
   const router = useRouter()
@@ -18,6 +19,8 @@ export default function AdminLayout({ children }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [session, setSession] = useState(null)
+  const [userId, setUserId] = useState(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const mobileTriggerRef = useRef(null)
@@ -34,6 +37,9 @@ export default function AdminLayout({ children }) {
         router.replace(roleDestination(data.role, null, { hasPublished: data.hasPublished }))
         return
       }
+      if (data.mfaRequired) { router.replace(`/mfa?next=${encodeURIComponent(window.location.pathname + window.location.search)}`); return }
+      setSession(data.session)
+      setUserId(data.user.id)
       try { setIsCollapsed(localStorage.getItem('beem_sidebar_collapsed') === 'true') } catch { /* Preferences are optional. */ }
       setUserEmail(data.user.email ?? '')
       setError('')
@@ -66,6 +72,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <TooltipProvider>
+      <SessionGuard initialSession={session} userId={userId} role="admin" />
       <div className="hive-shell hive-admin-shell">
         <Sidebar
           isCollapsed={isCollapsed}

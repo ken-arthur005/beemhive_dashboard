@@ -1,16 +1,38 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js/max'
 
+export const LINK_GROUPS = ['Social media', 'Professional & creator', 'Business & contact', 'Other']
+
 export const LINK_TYPES = [
-  { value: 'website', label: 'Website', placeholder: 'https://yourwebsite.com' },
   { value: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/username', hosts: ['instagram.com'] },
-  { value: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username', hosts: ['x.com', 'twitter.com'] },
+  { value: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/yourpage', hosts: ['facebook.com', 'fb.com', 'fb.me'] },
+  { value: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@username', hosts: ['tiktok.com'] },
+  { value: 'twitter', label: 'X (Twitter)', placeholder: 'https://x.com/username', hosts: ['x.com', 'twitter.com'] },
+  { value: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@channel', hosts: ['youtube.com', 'youtu.be'] },
+  { value: 'bluesky', label: 'Bluesky', placeholder: 'https://bsky.app/profile/yourhandle', hosts: ['bsky.app', 'bsky.social'] },
+  { value: 'snapchat', label: 'Snapchat', placeholder: 'https://snapchat.com/add/username', hosts: ['snapchat.com'] },
+  { value: 'pinterest', label: 'Pinterest', placeholder: 'https://pinterest.com/username', hosts: ['pinterest.com', 'pin.it'] },
+  { value: 'threads', label: 'Threads', placeholder: 'https://threads.com/@username', hosts: ['threads.com', 'threads.net'] },
+  { value: 'reddit', label: 'Reddit', placeholder: 'https://reddit.com/user/username', hosts: ['reddit.com', 'redd.it'] },
   { value: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username', hosts: ['linkedin.com'] },
+  { value: 'telegram', label: 'Telegram', placeholder: 'https://t.me/username', hosts: ['t.me', 'telegram.me'] },
   { value: 'whatsapp', label: 'WhatsApp', placeholder: 'https://wa.me/233XXXXXXXXX', hosts: ['wa.me', 'whatsapp.com'] },
-  { value: 'snapchat', label: 'Snapchat', placeholder: 'https://www.snapchat.com/add/username', hosts: ['snapchat.com'] },
+  { value: 'messenger', label: 'Facebook Messenger', placeholder: 'https://m.me/username', hosts: ['m.me', 'messenger.com', 'facebook.com'] },
+  { value: 'discord', label: 'Discord', placeholder: 'https://discord.gg/invite', hosts: ['discord.gg', 'discord.com'] },
+  { value: 'twitch', label: 'Twitch', placeholder: 'https://twitch.tv/username', hosts: ['twitch.tv'] },
+  { value: 'github', label: 'GitHub', placeholder: 'https://github.com/username', hosts: ['github.com'] },
+  { value: 'spotify', label: 'Spotify', placeholder: 'https://open.spotify.com/artist/your-id', hosts: ['spotify.com', 'spotify.link'] },
+  { value: 'soundcloud', label: 'SoundCloud', placeholder: 'https://soundcloud.com/username', hosts: ['soundcloud.com'] },
+  { value: 'applemusic', label: 'Apple Music', placeholder: 'https://music.apple.com/your-link', hosts: ['music.apple.com'] },
+  { value: 'website', label: 'Website', placeholder: 'https://yourwebsite.com' },
   { value: 'phone', label: 'Phone', placeholder: 'Phone number' },
   { value: 'email', label: 'Email', placeholder: 'you@example.com' },
+  { value: 'googlemaps', label: 'Google Maps', placeholder: 'https://maps.app.goo.gl/your-place', hosts: ['google.com', 'maps.app.goo.gl', 'goo.gl', 'share.google'] },
+  { value: 'googlereviews', label: 'Google Reviews', placeholder: 'https://g.page/r/your-business/review', hosts: ['g.page', 'google.com', 'maps.app.goo.gl', 'share.google'] },
+  { value: 'googledrive', label: 'Google Drive', placeholder: 'https://drive.google.com/your-link', hosts: ['drive.google.com', 'docs.google.com'] },
+  { value: 'appstore', label: 'App Store', placeholder: 'https://apps.apple.com/app/your-app', hosts: ['apps.apple.com', 'itunes.apple.com'] },
+  { value: 'location', label: 'Location', placeholder: 'https://maps.apple.com/your-place' },
   { value: 'custom', label: 'Custom', placeholder: 'https://your-link.com' },
-]
+].map((type, index) => ({ ...type, group: LINK_GROUPS[index < 16 ? 0 : index < 20 ? 1 : index < 28 ? 2 : 3] }))
 
 export function webUrl(value) {
   try {

@@ -10,7 +10,7 @@ const publicationClient = () => {
   return { from: () => query }
 }
 import { HttpError } from '../src/lib/http'
-import { GET } from '../src/app/api/auth/session/route'
+import { GET, POST } from '../src/app/api/auth/session/route'
 
 describe('verified browser-layout session endpoint', () => {
   beforeEach(() => { mocks.client.mockResolvedValue({ auth: { signOut: mocks.signOut } }) })
@@ -32,5 +32,19 @@ describe('verified browser-layout session endpoint', () => {
     expect(response.status).toBe(403)
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' })
     expect(await response.json()).toMatchObject({ code: 'account_inactive' })
+  })
+  it('returns a minimal first-factor admin session for MFA enrollment, never business data', async () => {
+    mocks.requireUser.mockResolvedValue({ user: { id: 'admin', email: 'admin@test.com' }, role: 'admin', account: null,
+      session: { valid: true, expiresAt: 'later', idleExpiresAt: 'sooner' }, mfaRequired: true })
+    const response = await GET(new Request('https://app.test/api/auth/session'))
+    expect(mocks.requireUser).toHaveBeenCalledWith(expect.any(Request), { allowSetup: true, allowMfaPending: true })
+    expect(await response.json()).toMatchObject({ role: 'admin', mfaRequired: true, account: null, hasPublished: false })
+  })
+  it('only activity POST opts into extending inactivity', async () => {
+    mocks.requireUser.mockResolvedValue({ user: { id: 'user' }, role: 'customer', mfaRequired: false, session: { valid: true } })
+    const response = await POST(new Request('https://app.test/api/auth/session', { method: 'POST', headers: { origin: 'https://app.test' } }))
+    expect(mocks.requireUser).toHaveBeenCalledWith(expect.any(Request), { allowSetup: true, allowMfaPending: true, touch: true })
+    expect(await response.json()).toEqual({ user: { id: 'user' }, role: 'customer', mfaRequired: false, session: { valid: true } })
+    expect(response.headers.get('cache-control')).toContain('no-store')
   })
 })

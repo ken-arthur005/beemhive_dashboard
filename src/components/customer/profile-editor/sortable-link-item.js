@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Trash2 } from 'lucide-react'
 import LinkIcon from '@/components/shared/link-icon'
-import { linkError } from '@/lib/profile-links'
+import { LINK_GROUPS, linkError } from '@/lib/profile-links'
 import PhoneInput from './phone-input'
 
 export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, disabled }) {
@@ -25,7 +25,9 @@ export default function SortableLinkItem({ link, linkTypes, onUpdate, onDelete, 
       <label htmlFor={typeId} className="sr-only">Link type</label>
       <select id={typeId} value={link.type} disabled={disabled} onChange={event => { onUpdate(link.id, { type: event.target.value, url: '' }); setUrlError(null) }}
         className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-2 text-sm focus:outline-amber-500">
-        {linkTypes.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+        {LINK_GROUPS.map(group => <optgroup key={group} label={group}>
+          {linkTypes.filter(type => type.group === group).map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+        </optgroup>)}
       </select>
       <button type="button" disabled={disabled} aria-label={`Remove ${currentType.label} link`} onClick={() => onDelete(link.id)}
         className="ml-auto min-h-9 min-w-9 flex items-center justify-center text-gray-500 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-amber-500"><Trash2 size={15} /></button>

@@ -17,6 +17,9 @@ export async function adminRequest(url, { body, ...options } = {}) {
     const error = new Error(typeof data?.error === 'string' ? data.error : data?.error?.message || data?.message || `Request failed (${response.status}). Please retry.`)
     error.status = response.status
     error.code = data?.code
+    if (typeof window !== 'undefined' && ['session_expired', 'unauthenticated', 'mfa_required'].includes(error.code)) {
+      window.dispatchEvent(new CustomEvent('beem:auth-required', { detail: error.code }))
+    }
     error.jobId = data?.jobId ?? data?.job?.id
     error.jobStatus = data?.jobStatus ?? data?.status ?? data?.job?.status
     throw error

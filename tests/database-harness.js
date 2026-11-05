@@ -50,8 +50,13 @@ export async function createHarness(value) {
       END $$;
       CREATE SCHEMA auth;
       CREATE TABLE auth.users(id uuid PRIMARY KEY, email text);
+      CREATE TABLE auth.sessions(id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+        created_at timestamptz NOT NULL DEFAULT now());
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
         SELECT nullif(current_setting('request.jwt.claim.sub', true),'')::uuid;
+      $$;
+      CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$
+        SELECT coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb;
       $$;
       CREATE SCHEMA storage;
       CREATE TABLE storage.buckets(id text PRIMARY KEY, name text NOT NULL, public boolean DEFAULT false,
@@ -97,13 +102,26 @@ export async function createHarness(value) {
     for (const migration of migrations.filter(file => file !== baseline && file !== lifecycle)) {
       await pool.query(await readFile(new URL(`supabase/migrations/${migration}`, root), 'utf8'))
     }
-    async function asRole(role, user, sql, params = []) {
+    const sessions = new Map()
+    async function session(user, startedAt = new Date()) {
+      const id = randomUUID()
+      await pool.query('INSERT INTO auth.sessions(id,user_id,created_at) VALUES($1,$2,$3)', [id,user,startedAt])
+      await pool.query('SELECT public.check_app_session($1,$2,false)', [user,id])
+      return id
+    }
+    async function asRole(role, user, sql, params = [], claims = {}) {
       if (!['anon', 'authenticated', 'service_role'].includes(role)) throw new Error('Invalid test role')
+      let sessionId = claims.session_id
+      if (role === 'authenticated' && user && !sessionId && (await pool.query('SELECT 1 FROM auth.users WHERE id=$1', [user])).rowCount) {
+        if (!sessions.has(user)) sessions.set(user, await session(user))
+        sessionId = sessions.get(user)
+      }
       const client = await pool.connect()
       try {
         await client.query('BEGIN')
         await client.query(`SET LOCAL ROLE ${role}`)
         await client.query("SELECT set_config('request.jwt.claim.sub',$1,true)", [user || ''])
+        await client.query("SELECT set_config('request.jwt.claims',$1,true)", [JSON.stringify({ sub: user, session_id: sessionId, aal: 'aal2', ...claims })])
         const result = await client.query(sql, params)
         await client.query('COMMIT')
         return result
@@ -130,7 +148,7 @@ export async function createHarness(value) {
     async function item(owner, slug = `test-${randomUUID()}`, operation = randomUUID(), type = 'card') {
       return rpc('create_nfc_item', [ids.admin, owner, slug, type, operation])
     }
-    return { pool, rpc, service, asRole, customer, item, preserved, close,
+    return { pool, rpc, service, asRole, session, customer, item, preserved, close,
       storageCutover: () => readFile(new URL('supabase/storage-cutover.sql', root), 'utf8'),
       databaseName: name, sourcePath: fileURLToPath(root) }
   } catch (error) {

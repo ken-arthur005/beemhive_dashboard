@@ -8,7 +8,7 @@ vi.mock('../src/lib/supabase/server', () => ({
 import { requireUser } from '../src/lib/auth'
 
 function db(role = 'customer', account = { user_id: 'user', status: 'active', setup_completed_at: null }) {
-  return { from: vi.fn(table => {
+  return { rpc: vi.fn(async () => ({ data: { valid: true, expiresAt: '2026-11-06T00:00:00Z', idleExpiresAt: '2026-11-05T12:30:00Z', serverNow: '2026-11-05T12:00:00Z' } })), from: vi.fn(table => {
     const chain = { select: vi.fn(() => chain), eq: vi.fn(() => chain),
       maybeSingle: vi.fn(async () => ({ data: table === 'users_roles' ? (role === null ? null : { role }) : account })) }
     return chain
@@ -18,7 +18,8 @@ function db(role = 'customer', account = { user_id: 'user', status: 'active', se
 describe('verified API authorization', () => {
   let client
   beforeEach(() => {
-    client = { auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user' } } })) } }
+    client = { auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user' } } })),
+      getClaims: vi.fn(async () => ({ data: { claims: { sub: 'user', session_id: '30000000-0000-0000-0000-000000000001', aal: 'aal2' } } })) } }
     mocks.cookie.mockResolvedValue(client)
     mocks.token.mockReturnValue(client)
     mocks.service.mockReturnValue(db())
@@ -79,5 +80,38 @@ describe('verified API authorization', () => {
     const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({ error: { code: 'XX000' } }) }
     mocks.service.mockReturnValue({ from: () => chain })
     await expect(requireUser(request(), { allowSetup: true })).rejects.toMatchObject({ status: 503 })
+  })
+  it('rejects admin API access without verified MFA, including bearer requests', async () => {
+    mocks.service.mockReturnValue(db('admin', null))
+    client.auth.getClaims.mockResolvedValue({ data: { claims: { sub: 'user', session_id: '30000000-0000-0000-0000-000000000001', aal: 'aal1' } } })
+    await expect(requireUser(request({ authorization: 'Bearer token' }), { role: 'admin' })).rejects.toMatchObject({ status: 403, code: 'mfa_required' })
+    expect(client.auth.getClaims).toHaveBeenCalledWith('token')
+    expect(await requireUser(request(), { allowMfaPending: true })).toMatchObject({ mfaRequired: true })
+  })
+  it('does not trust forged claims, mismatched subjects or missing session IDs', async () => {
+    for (const result of [{ error: { status: 401 } }, { data: { claims: { sub: 'other' } } }, { data: { claims: { sub: 'user' } } }]) {
+      client.auth.getClaims.mockResolvedValue(result)
+      await expect(requireUser(request())).rejects.toMatchObject({ status: 401 })
+    }
+  })
+  it('fails closed when the session migration or backend is unavailable', async () => {
+    const backend = db()
+    backend.rpc.mockResolvedValue({ error: { code: 'PGRST202' } })
+    mocks.service.mockReturnValue(backend)
+    await expect(requireUser(request())).rejects.toMatchObject({ status: 503, code: 'session_unavailable' })
+  })
+  it('enforces server expiry before using privileged endpoints', async () => {
+    const backend = db()
+    backend.rpc.mockResolvedValue({ data: { valid: false } })
+    mocks.service.mockReturnValue(backend)
+    await expect(requireUser(request())).rejects.toMatchObject({ status: 401, code: 'session_expired' })
+  })
+  it('ordinary requests do not extend inactivity; only explicit activity opts in', async () => {
+    const backend = db()
+    mocks.service.mockReturnValue(backend)
+    await requireUser(request())
+    expect(backend.rpc).toHaveBeenLastCalledWith('check_app_session', expect.objectContaining({ p_touch: false }))
+    await requireUser(request({ origin: 'https://app.test' }, 'POST'), { touch: true })
+    expect(backend.rpc).toHaveBeenLastCalledWith('check_app_session', expect.objectContaining({ p_touch: true }))
   })
 })

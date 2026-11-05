@@ -1,5 +1,15 @@
 # NFC database implementation
 
+## November 5 links and session security
+
+The additive `20261105034956_expanded_platform_links.sql` and
+`20261105035100_session_expiry_and_admin_mfa.sql` migrations expand the link catalog,
+add service-only app sessions, and restrict authenticated reads by live session and
+administrator MFA. They preserve existing content and the eight-link limit. Deploy
+with the compatible app; see `docs/AUTH_SECURITY_AND_EMAIL.md` for rollout, recovery,
+role-specific expiry, and still-pending branded-email configuration. Local tests do
+not apply these migrations to a hosted project.
+
 ## October 31 profile feedback release
 
 Apply `20261031222517_profile_feedback_and_unique_analytics.sql` **before** deploying

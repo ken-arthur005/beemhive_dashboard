@@ -4,6 +4,7 @@ import { createServiceClient } from './lib/supabase/server'
 import { resolveAccount } from './lib/auth'
 import { hasPublishedProfile } from './lib/publication-history'
 import { roleDestination } from './lib/supabase/redirects'
+import { authorizeSession } from './lib/session-security'
 
 export async function proxy(request) {
   if (request.nextUrl.pathname.startsWith('/t/')) {
@@ -30,8 +31,14 @@ export async function proxy(request) {
   if (error || !data?.user) return redirect('/login', error?.status >= 500 ? 'auth_unavailable' : undefined)
   try {
     const auth = await resolveAccount(createServiceClient(), data.user)
+    await authorizeSession(auth, bridge.supabase)
     if (auth.role !== requiredRole) return redirect(roleDestination(auth.role, null, { hasPublished: await hasPublishedProfile(auth) }))
   } catch (failure) {
+    if (failure.code === 'mfa_required') {
+      const url = new URL('/mfa', request.url)
+      url.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+      return bridge.applyTo(NextResponse.redirect(url))
+    }
     if (failure.code === 'account_inactive' || failure.code === 'invalid_role') {
       try { await bridge.supabase.auth.signOut({ scope: 'local' }) } catch { /* Preserve the account denial. */ }
     }
@@ -41,5 +48,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/customer/:path*', '/login', '/invite', '/forgot-password', '/reset-password', '/auth/:path*', '/t/:path*'],
+  matcher: ['/admin/:path*', '/customer/:path*', '/login', '/mfa', '/invite', '/forgot-password', '/reset-password', '/auth/:path*', '/t/:path*'],
 }
