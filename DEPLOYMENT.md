@@ -14,9 +14,10 @@ configure the application's environment or grant access to Auth email templates.
 
 See `docs/AUTH_SECURITY_AND_EMAIL.md` for the two additive November 5 migrations,
 mandatory administrator TOTP enrollment/recovery, role-specific app-session limits,
-and branded-email forwarding to **beemhive305@gmail.com**. Apply the migrations and
+and approved Gmail SMTP sending from **beemhive305@gmail.com**. Apply the migrations and
 compatible application together after staging verification. Existing old sessions
-may expire immediately. Domain/SMTP/forwarding details still require owner input;
+may expire immediately. Gmail SMTP still requires a Google App Password entered
+securely into Supabase; no custom domain or forwarding is needed. Live
 email setup and real hosted Auth/MFA tests are not completed by a local build.
 
 1. Supply SUPABASE_SERVICE_ROLE_KEY in ignored `.env.local` and Vercel settings.

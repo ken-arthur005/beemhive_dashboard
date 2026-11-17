@@ -1,4 +1,4 @@
-# Sessions, administrator MFA, and branded email
+# Sessions, administrator MFA, and Gmail SMTP
 
 ## Deploy together
 
@@ -97,37 +97,70 @@ Recovery is intentionally an operator procedure, not a new automatic bypass or
 custom recovery-code subsystem. Validate actual hosted Auth behavior in staging;
 local Postgres uses Auth-schema stubs, not the GoTrue HTTP service.
 
-## Simplest branded-email setup (pending domain/provider)
+## Gmail SMTP setup (approved; credential/configuration pending)
 
-The approved destination is **beemhive305@gmail.com**. The actual branded domain
-has not been supplied; do not invent a sender, change DNS, or send customer emails
-until the owner confirms the domain and sender address.
+The owner approved using **beemhive305@gmail.com directly** as the official sender.
+This replaces the earlier custom-domain/forwarding proposal. Replies arrive in that
+same Gmail inbox; no forwarding, domain purchase, DNS changes, or custom Auth email
+hook is required. **https://beemhive.vercel.app** remains the website URL, not an
+email domain: the Vercel-provided hostname cannot be configured for branded mail.
 
-1. Verify the owner's sending domain with a transactional provider supporting SMTP.
-   Configure its SPF/DKIM records and an appropriate DMARC policy without creating
-   duplicate SPF records or overwriting existing mail routing.
-2. In Supabase Auth, configure **custom SMTP**, sender name **Beem Hive**, and the
-   verified branded sender address. Preserve the invite/recovery templates and
-   explicit confirmation flow in `src/lib/supabase/SETUP_CONTRACT.md`.
-3. At the domain's inbound mail/forwarding provider, create an alias for that exact
-   branded sender address forwarding to **beemhive305@gmail.com**. SMTP sending and
-   inbound forwarding are different services; a sending-only provider does not
-   automatically receive or forward replies. Coordinate MX changes with existing mail.
-4. Leave Reply-To unset (or equal to the branded sender). Recipients reply to the
-   branded address and the inbound alias forwards those replies to Gmail. No custom
-   Auth email hook, Gmail SMTP password, or application forwarding code is needed.
-5. Enable the relevant built-in Auth security notifications (password/email changes
-   and MFA enrollment/removal where supported) and verify they use the same sender.
-   There is no separate general application-notification email engine in this repo;
-   any future one must use the same approved sender/provider.
-6. Test an actual new invitation, existing-customer setup/reset, password reset and
-   security notification to an external mailbox. Reply to each and confirm arrival
-   in Gmail; inspect sender authentication and spam delivery. Check the provider's
-   bounce handling and Supabase rate limits. Never put SMTP credentials in public env vars.
+### One-time Google account step
 
-Forwarding delivers incoming replies to Gmail; it does not configure Gmail to send
-replies as the branded address. Gmail "Send mail as" is a separate optional setup,
-not included here. Normal replies sent from Gmail may reveal the Gmail address.
+The mailbox owner must enable Google **2-Step Verification**, then create an
+[App Password](https://myaccount.google.com/apppasswords) named `Beem Hive Supabase`.
+Google only displays the generated password once. Do not use the normal Gmail
+password, paste the app password into chat, commit it, or expose it through a
+`NEXT_PUBLIC_` environment variable. Enter it directly into Supabase's SMTP password
+field. Some protected or managed Google accounts do not offer App Passwords; if the
+option is unavailable, do not weaken account security to work around it.
+
+### Supabase Auth settings
+
+Open Authentication → Email → SMTP Settings and enable **custom SMTP**:
+
+| Setting | Value |
+| --- | --- |
+| Sender email | `beemhive305@gmail.com` |
+| Sender name | `Beem Hive` |
+| SMTP host | `smtp.gmail.com` |
+| SMTP port | `465` (SSL/TLS) |
+| SMTP username | `beemhive305@gmail.com` |
+| SMTP password | The generated Google App Password, without display spaces |
+
+Use port `587` with STARTTLS instead only if the provider configuration requires it;
+never disable TLS. Leave Reply-To unset so replies go to the sender's Gmail inbox.
+Keep existing sign-up restrictions, confirmation requirements and rate limits; an
+SMTP change must not silently enable public registration or weaken authentication.
+
+Preserve the existing invite/recovery templates and explicit confirmation flow in
+`src/lib/supabase/SETUP_CONTRACT.md`. Keep the Site URL and production redirect
+allowlist aligned to **https://beemhive.vercel.app**. Do not enable an unconfigured
+custom Send Email Hook: it would override SMTP delivery.
+
+Enable the relevant built-in Auth security notifications (password/email changes and
+MFA enrollment/removal where supported), and verify they use the same sender. There
+is no separate general application-notification email engine in this repo; any
+future one must use the same approved sender/provider.
+
+### Verification and operating limits
+
+After saving, test actual invitation, existing-customer setup/reset, password reset
+and security-notification delivery with approved test accounts. Confirm the sender
+is `Beem Hive <beemhive305@gmail.com>`, website links use the production origin, and
+replies arrive in the Gmail inbox. Inspect spam/bounces and both Gmail and Supabase
+rate limits. Do not send customer invitations merely to test configuration.
+
+Personal Gmail has sending quotas and anti-abuse restrictions, and is suitable only
+for low-volume use—not bulk mail or guaranteed transactional delivery. Google may
+revoke App Passwords when the account password changes; regenerate the dedicated
+credential and update Supabase if that happens. A transactional provider with an
+owned domain can replace Gmail later if volume/reliability needs grow.
+
+**Current status:** no Google App Password or local Supabase Management access token
+was available during setup. These instructions do not mean live SMTP has been enabled
+or that delivery has been verified. No application SMTP package is necessary: the
+existing Supabase invitation/reset calls inherit the project's configured sender.
 
 ## Verification
 

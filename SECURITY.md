@@ -29,7 +29,7 @@ The November release adds mandatory administrator TOTP MFA and server-enforced
 role-specific idle/absolute expiry, including restrictive direct-read RLS. Session
 identity and AAL come from verified claims, with live Auth-session ownership checks;
 browser timers and editable metadata are never authorization. Recovery, migration
-coordination and pending branded-email setup are documented in
+coordination and pending Gmail SMTP setup are documented in
 `docs/AUTH_SECURITY_AND_EMAIL.md`. Local tests do not certify hosted Auth/SMTP.
 
 Privileged clients are server-only, isolated from user cookies and guarded by
